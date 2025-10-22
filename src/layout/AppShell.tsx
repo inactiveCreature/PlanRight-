@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import AssistantPanel from '../components/AssistantPanel'
 import FullscreenToggle from '../components/FullscreenToggle'
+import BrandLogo from '../components/BrandLogo'
 import type { UserRole } from '../utils/roleCopy'
 
 interface AppShellProps {
@@ -21,25 +22,11 @@ export default function AppShell({ children, role }: AppShellProps) {
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Fixed header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 lg:px-6 xl:px-8 py-4 h-16">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div>
-              <div className="font-bold text-xl text-slate-900">PlanRight</div>
-              <div className="text-sm text-slate-500">
-                Exempt Development Assessment — Sheds • Patios • Carports
-              </div>
-            </div>
-          </div>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+        <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 md:px-6 py-4 h-14">
+          <a href="/" aria-label="PlanRight Home" className="flex items-center gap-3 min-h-[44px] min-w-[44px]">
+            <BrandLogo variant="full" size="xl" />
+          </a>
           <div className="flex items-center gap-3">
             {role && <Badge kind="info">Role: {role}</Badge>}
 
@@ -63,7 +50,7 @@ export default function AppShell({ children, role }: AppShellProps) {
               {/* Assistant button */}
               <button
                 onClick={() => setIsMobileDrawerOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0A6CFF] text-white text-sm hover:opacity-90 transition-colors"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
@@ -80,14 +67,17 @@ export default function AppShell({ children, role }: AppShellProps) {
       </header>
 
       {/* Main content area with responsive layout */}
-      <main className="pt-20 px-4 lg:px-6 xl:px-8 py-6">
+      <main className="pt-16 px-4 md:px-6 py-6">
         {/* Desktop layout: Sidebar | Main | Assistant */}
         <div className="hidden lg:grid grid-cols-[280px_minmax(0,1fr)_360px] gap-6 max-w-screen-xl mx-auto">
           {children}
 
           {/* Desktop Assistant Panel */}
-          <aside className="sticky top-[80px] w-[360px] max-w-[360px] min-w-0">
-            <AssistantPanel role={role || 'User'} />
+          <aside className="sticky top-[calc(theme(spacing.16)+theme(spacing.4))] w-[360px] max-w-[360px] min-w-0">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 min-h-[320px]">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Planning expert</h3>
+              <AssistantPanel role={role || 'User'} className="border-none shadow-none p-0" />
+            </div>
           </aside>
         </div>
 

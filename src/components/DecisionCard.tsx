@@ -1,7 +1,273 @@
-import type { RuleResult } from '../types'
-import { getRoleSpecificNextSteps, type UserRole } from '../utils/roleCopy'
+import { useState, useRef } from 'react'
+import type { RuleResult, RuleCheck } from '../types'
+import { lookup_clause } from '../rules/engine'
+import type { UserRole } from '../utils/roleCopy'
+import { generateDecisionCardPDF, generateTextPDF } from '../utils/pdfGenerator'
 
-/** Decision Card matching exact format from system prompt requirements. */
+// Decision color mapping with enhanced visual states
+const DECISION_COLORS = {
+  'Likely Exempt': {
+    ring: 'ring-emerald-300',
+    bg: 'bg-gradient-to-br from-emerald-50 to-green-50',
+    statusIcon: '✅',
+    statusColor: 'text-emerald-700',
+    headerBg: 'bg-gradient-to-r from-emerald-100 to-green-100',
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-green-500',
+    iconColor: 'text-white',
+    border: 'border-emerald-200',
+  },
+  'Likely Not Exempt': {
+    ring: 'ring-red-300', 
+    bg: 'bg-gradient-to-br from-red-50 to-rose-50',
+    statusIcon: '❌',
+    statusColor: 'text-red-700',
+    headerBg: 'bg-gradient-to-r from-red-100 to-rose-100',
+    iconBg: 'bg-gradient-to-br from-red-500 to-rose-500',
+    iconColor: 'text-white',
+    border: 'border-red-200',
+  },
+  'Cannot assess': {
+    ring: 'ring-amber-300',
+    bg: 'bg-gradient-to-br from-amber-50 to-yellow-50', 
+    statusIcon: '⚠️',
+    statusColor: 'text-amber-700',
+    headerBg: 'bg-gradient-to-r from-amber-100 to-yellow-100',
+    iconBg: 'bg-gradient-to-br from-amber-500 to-yellow-500',
+    iconColor: 'text-white',
+    border: 'border-amber-200',
+  },
+}
+
+// Check label normalization
+function normalizeCheckLabel(check: RuleCheck): string {
+  const { rule_id, note } = check
+  
+  // Map known patterns to user-friendly labels with clear explanations
+  const labelMappings: Record<string, string> = {
+    'on_easement': '🚫 Cannot build on easement',
+    'over_sewer': '🚫 Cannot build over sewer lines',
+    'behind_building_line': '📍 Must be behind building line',
+    'setback_front': '📏 Front setback distance required',
+    'setback_side': '📏 Side setback distance required', 
+    'setback_rear': '📏 Rear setback distance required',
+    'height_max': '📐 Maximum height limit',
+    'area_max': '📐 Maximum floor area limit',
+    'heritage_item': '🏛️ Heritage item protection zone',
+    'conservation_area': '🌳 Conservation area restrictions',
+    'flood_prone': '🌊 Flood prone area limitations',
+    'bushfire_prone': '🔥 Bushfire prone area requirements',
+    'attached_to_dwelling': '🏠 Must attach to main dwelling',
+    'shipping_container': '📦 Shipping containers not allowed',
+    'non_combustible': '🛡️ Non-combustible materials required',
+    'roof_clearance': '🏠 Roof boundary clearance needed',
+    'class_7a': '🏢 Class 7a buildings prohibited',
+  }
+
+  // Try to match rule_id patterns
+  for (const [pattern, label] of Object.entries(labelMappings)) {
+    if (rule_id.toLowerCase().includes(pattern)) {
+      return label
+    }
+  }
+
+  // Fallback to note if no pattern matches
+  return note || rule_id
+}
+
+// Severity mapping
+function getCheckSeverity(check: RuleCheck): 'critical' | 'major' | 'info' {
+  if (check.killer === true) return 'critical'
+  if (!check.pass) return 'major'
+  return 'info'
+}
+
+// Sort checks by priority
+export function pickTopSix(checks: RuleCheck[]): RuleCheck[] {
+  const severityOrder = { critical: 0, major: 1, info: 2 }
+  
+  return checks
+    .sort((a, b) => {
+      // First by severity
+      const severityDiff = severityOrder[getCheckSeverity(a)] - severityOrder[getCheckSeverity(b)]
+      if (severityDiff !== 0) return severityDiff
+      
+      // Then by pass status (fails before passes)
+      if (a.pass !== b.pass) return a.pass ? 1 : -1
+      
+      // Finally by rule_id alphabetically
+      return a.rule_id.localeCompare(b.rule_id)
+    })
+    .slice(0, 6)
+}
+
+// Clause chip component
+function ClauseChip({ clauseRef }: { clauseRef: string }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const clauseInfo = lookup_clause(clauseRef)
+  
+  return (
+    <div className="relative">
+      <button
+        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 hover:from-blue-200 hover:to-indigo-200 transition-all duration-200 shadow-sm border border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onFocus={() => setIsHovered(true)}
+        onBlur={() => setIsHovered(false)}
+        aria-label={`Clause ${clauseRef}: ${clauseInfo.title}`}
+        aria-describedby={`clause-tooltip-${clauseRef}`}
+      >
+        <svg className="w-3 h-3 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+        <span className="truncate">{clauseRef}</span>
+      </button>
+      
+      {isHovered && (
+        <div 
+          id={`clause-tooltip-${clauseRef}`}
+          className="absolute bottom-full left-0 mb-3 w-80 p-4 bg-slate-900 text-white text-sm rounded-xl shadow-xl z-20 border border-slate-700"
+          role="tooltip"
+        >
+          <div className="font-bold mb-2 text-blue-300">{clauseInfo.title}</div>
+          <div className="text-slate-300 leading-relaxed">{clauseInfo.summary}</div>
+          <div className="absolute top-full left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Purchaser risk panel
+function PurchaserRiskPanel() {
+  return (
+    <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg" role="alert" aria-labelledby="risk-assessment-title">
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center flex-shrink-0 shadow-md" aria-hidden="true">
+          <svg className="w-5 h-5 text-amber-800" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h4 id="risk-assessment-title" className="text-lg font-bold text-amber-900 mb-3">Purchase Risk Assessment</h4>
+          <ul className="text-sm text-amber-800 space-y-2 mb-4" role="list">
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0" aria-hidden="true"></span>
+              <span>Development approval may be required</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0" aria-hidden="true"></span>
+              <span>Additional costs and delays likely</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0" aria-hidden="true"></span>
+              <span>Consider impact on property value</span>
+            </li>
+          </ul>
+          <button 
+            className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#0A6CFF] to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0A6CFF] focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg"
+            aria-label="Export assessment results for conveyancer"
+          >
+            <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            <span>Export for conveyancer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Check item component
+function CheckItem({ check, showClauseRef = true }: { check: RuleCheck; showClauseRef?: boolean }) {
+  const severity = getCheckSeverity(check)
+  const label = normalizeCheckLabel(check)
+  
+  // Determine styling based on severity and pass status
+  const getItemStyles = () => {
+    if (severity === 'critical' && !check.pass) {
+      return 'text-rose-800 bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 p-4 rounded-xl shadow-sm'
+    }
+    if (severity === 'major' && !check.pass) {
+      return 'text-amber-800 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 p-4 rounded-xl shadow-sm'
+    }
+    if (check.pass) {
+      return 'text-emerald-800 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-4 rounded-xl shadow-sm'
+    }
+    return 'text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-xl'
+  }
+
+  const getStatusIcon = () => {
+    if (severity === 'critical' && !check.pass) return '🔴'
+    if (severity === 'major' && !check.pass) return '🟡'
+    if (check.pass) return '✅'
+    return 'ℹ️'
+  }
+
+  const getStatusColor = () => {
+    if (severity === 'critical' && !check.pass) return 'text-rose-600'
+    if (severity === 'major' && !check.pass) return 'text-amber-600'
+    if (check.pass) return 'text-emerald-600'
+    return 'text-slate-500'
+  }
+
+  const getStatusText = () => {
+    if (severity === 'critical' && !check.pass) return 'Critical failure'
+    if (severity === 'major' && !check.pass) return 'Major issue'
+    if (check.pass) return 'Passed'
+    return 'Information'
+  }
+
+  const getUserFriendlyExplanation = () => {
+    if (check.pass) {
+      return '✅ This requirement is met - no action needed'
+    }
+    
+    if (severity === 'critical') {
+      return '🚨 This is a critical issue that must be resolved before proceeding'
+    }
+    
+    if (severity === 'major') {
+      return '⚠️ This issue needs attention and may require changes to your plans'
+    }
+    
+    return 'ℹ️ Additional information about this requirement'
+  }
+  
+  return (
+    <div className={`flex items-start gap-4 ${getItemStyles()} transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2`} role="listitem">
+      <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${getStatusColor()} flex-shrink-0`} aria-hidden="true">
+        <span className="text-sm font-bold">
+          {getStatusIcon()}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold mb-1" aria-label={`${label} - ${getStatusText()}`}>
+          {label}
+        </div>
+        <div className="text-xs text-slate-600 mb-2 leading-relaxed font-medium">
+          {getUserFriendlyExplanation()}
+        </div>
+        {check.note !== label && check.note && (
+          <div className="text-xs text-slate-500 mb-2 leading-relaxed italic">
+            Technical details: {check.note}
+          </div>
+        )}
+        {showClauseRef && (
+          <div className="mt-3">
+            <ClauseChip clauseRef={check.clause_ref} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Main DecisionCard component
 export default function DecisionCard({
   result,
   role = 'Resident',
@@ -9,260 +275,197 @@ export default function DecisionCard({
   result: RuleResult | null
   role?: UserRole
 }) {
-  if (!result) return null
+  const [showFullTrace, setShowFullTrace] = useState(false)
+  const [traceFilter, setTraceFilter] = useState<'All' | 'Fails' | 'Passes' | 'Warnings'>('All')
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
-  const isExempt = result.decision === 'Likely Exempt'
-  const isNotExempt = result.decision === 'Likely Not Exempt'
-
-  // Get unique clause references for the references section
-  const uniqueClauses = [...new Set(result.checks.map((c) => c.clause_ref))].sort()
-
-  // Generate role-specific next steps
-  const getNextSteps = () => {
-    // Critical fails: all killer fails + non-killer fails where killer=false and pass=false
-    const criticalFails = result.checks.filter((c) => {
-      if (!c.pass) {
-        // All killer fails are critical
-        if (c.killer === true) {
-          return true
-        }
-        // Non-killer fails are also critical
-        return true
+  // PDF download handler
+  const handleDownloadPDF = async () => {
+    if (!result || !cardRef.current) return
+    
+    setIsGeneratingPDF(true)
+    try {
+      // Try visual PDF first, fallback to text PDF if it fails
+      try {
+        await generateDecisionCardPDF(cardRef.current, result)
+      } catch (error) {
+        console.warn('Visual PDF generation failed, falling back to text PDF:', error)
+        generateTextPDF(result)
       }
-      return false
-    })
-    const hasFailures = criticalFails.length > 0
-
-    // Get role-specific next steps
-    const roleSteps = getRoleSpecificNextSteps(role, hasFailures)
-
-    if (!hasFailures) {
-      return roleSteps
+    } catch (error) {
+      console.error('PDF generation failed:', error)
+      alert('Failed to generate PDF. Please try again.')
+    } finally {
+      setIsGeneratingPDF(false)
     }
-
-    // Add specific technical steps for failures
-    const technicalSteps: string[] = []
-    criticalFails.forEach((c) => {
-      switch (c.rule_id) {
-        case 'G-AREA-1':
-          technicalSteps.push('Check area calculation - length × width should match entered area')
-          break
-        case 'G-SITING-1':
-          technicalSteps.push('Relocate structure off easement')
-          break
-        case 'G-HERITAGE-1':
-          technicalSteps.push('Seek council advice - heritage/conservation restrictions apply')
-          break
-        case 'S-BBL-1':
-        case 'P-BBL-1':
-        case 'C-BBL-1':
-          technicalSteps.push('Ensure structure is behind building line')
-          break
-        case 'S-FRONT-1':
-        case 'P-FRONT-1':
-        case 'C-FRONT-1':
-          technicalSteps.push('Increase front setback to ≥ 5.0m')
-          break
-        case 'S-HEIGHT-1':
-          technicalSteps.push('Reduce height to ≤ 3.0m')
-          break
-        case 'S-AREA-1':
-          technicalSteps.push('Reduce area to ≤ 20m²')
-          break
-        case 'S-SIDE-1':
-          technicalSteps.push('Increase side setback to ≥ 0.9m')
-          break
-        case 'S-REAR-1':
-          technicalSteps.push('Increase rear setback to ≥ 0.9m')
-          break
-        case 'S-SEWER-1':
-          technicalSteps.push('Relocate structure away from sewer lines')
-          break
-        case 'S-ATTACH-1':
-          technicalSteps.push('Detach shed from dwelling')
-          break
-        case 'S-FLOOD-1':
-          technicalSteps.push('Seek council advice - flood restrictions apply')
-          break
-        case 'S-BUSHFIRE-1':
-          technicalSteps.push('Seek council advice - bushfire restrictions apply')
-          break
-      }
-    })
-
-    // Combine role-specific and technical steps
-    return [...technicalSteps, ...roleSteps]
   }
 
+  if (!result) return null
+
+  const colors = DECISION_COLORS[result.decision]
+  const topChecks = pickTopSix(result.checks)
+  const criticalFails = result.checks.filter(c => getCheckSeverity(c) === 'critical' && !c.pass)
+  const failCount = result.checks.filter(c => !c.pass).length
+  const passCount = result.checks.filter(c => c.pass).length
+  
+  // Filter checks for full trace
+  const filteredChecks = result.checks.filter(check => {
+    if (traceFilter === 'All') return true
+    if (traceFilter === 'Fails') return !check.pass
+    if (traceFilter === 'Passes') return check.pass
+    if (traceFilter === 'Warnings') return getCheckSeverity(check) === 'major'
+    return true
+  })
+
   return (
-    <div
-      className={`border-2 rounded-2xl p-6 shadow-lg transition-all duration-300 max-w-[960px] mx-auto ${
-        isExempt
-          ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50'
-          : isNotExempt
-            ? 'border-red-300 bg-gradient-to-br from-red-50 to-rose-50'
-            : 'border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50'
-      }`}
+    <div 
+      ref={cardRef}
+      className={`rounded-3xl border-2 p-0 bg-white shadow-xl ring-2 ${colors.ring} ${colors.bg} transition-all duration-300 hover:shadow-2xl overflow-hidden`} 
+      role="region" 
+      aria-labelledby="decision-title"
     >
-      {/* DECISION Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div
-            className={`p-4 rounded-2xl ${
-              isExempt ? 'bg-green-200' : isNotExempt ? 'bg-red-200' : 'bg-amber-200'
-            }`}
-          >
-            {isExempt ? (
-              <svg className="w-8 h-8 text-green-800" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : isNotExempt ? (
-              <svg className="w-8 h-8 text-red-800" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg className="w-8 h-8 text-amber-800" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
+      {/* Clean Header */}
+      <div className={`${colors.headerBg} p-6 border-b border-white/20`}>
+        {/* Main Header Row */}
+        <div className="flex items-center justify-between mb-4">
+          {/* Status Icon and Title */}
+          <div className="flex items-center gap-4">
+            <div className={`w-16 h-16 rounded-2xl ${colors.iconBg} flex items-center justify-center shadow-lg`}>
+              <span className="text-2xl" aria-hidden="true">{colors.statusIcon}</span>
+            </div>
+            <div>
+              <h2 id="decision-title" className="text-3xl font-bold text-slate-900 tracking-tight">{result.decision}</h2>
+              <p className="text-slate-600 font-medium mt-1">{result.checks.length} checks evaluated</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">DECISION: {result.decision}</h2>
-            <p className="text-sm text-slate-600 font-medium">Rules Engine Assessment</p>
+          
+          {/* PDF Download Button */}
+          <div className="flex gap-3">
+            <button 
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="px-4 py-2.5 bg-white/90 hover:bg-white text-slate-700 hover:text-slate-900 rounded-xl transition-all duration-200 border border-white/60 hover:border-white shadow-sm hover:shadow-md flex items-center gap-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Download assessment as PDF"
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Download PDF
+                </>
+              )}
+            </button>
           </div>
+        </div>
+        
+        {/* Metrics Summary */}
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500" aria-hidden="true"></div>
+            <span className="font-semibold text-slate-700">{failCount} failed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500" aria-hidden="true"></div>
+            <span className="font-semibold text-slate-700">{passCount} passed</span>
+          </div>
+          {result.errors.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500" aria-hidden="true"></div>
+              <span className="font-semibold text-slate-700">{result.errors.length} validation errors</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* WHY Section */}
-      <div className="mb-8">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">WHY (≤6 bullets):</h3>
-        <ul className="space-y-2">
-          {result.checks.slice(0, 6).map((c) => (
-            <li key={c.rule_id} className="flex items-start gap-3">
-              <span
-                className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                  c.pass ? 'bg-green-600' : 'bg-red-600'
-                }`}
-              ></span>
-              <span className="text-sm">
-                <span className="font-medium">{c.note}</span> —
-                <span
-                  className={`ml-1 font-semibold ${c.pass ? 'text-green-800' : 'text-red-800'}`}
-                >
-                  {c.pass ? 'pass' : 'fail'}
-                </span>
-                <span className="ml-1 text-slate-500">[{c.clause_ref}]</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Critical fails */}
-      {result.checks.some((c) => !c.pass) && (
-        <div className="mb-8">
-          <h3 className="text-lg font-bold text-red-800 mb-4">Critical fails (if any):</h3>
-          <ul className="space-y-2">
-            {result.checks
-              .filter((c) => !c.pass)
-              .map((c) => (
-                <li key={c.rule_id} className="flex items-start gap-3">
-                  <span className="w-2 h-2 bg-red-600 rounded-full mt-2 flex-shrink-0"></span>
-                  <span className="text-sm text-red-800">
-                    {c.rule_id === 'G-AREA-1'
-                      ? 'Area calculation mismatch — check length × width'
-                      : c.rule_id === 'G-SITING-1'
-                        ? 'On easement — relocate off easement'
-                        : c.rule_id === 'G-HERITAGE-1'
-                          ? 'Heritage/conservation restrictions — seek council advice'
-                          : c.rule_id === 'S-BBL-1' ||
-                              c.rule_id === 'P-BBL-1' ||
-                              c.rule_id === 'C-BBL-1'
-                            ? 'Not behind building line — relocate behind building line'
-                            : c.rule_id === 'S-FRONT-1' ||
-                                c.rule_id === 'P-FRONT-1' ||
-                                c.rule_id === 'C-FRONT-1'
-                              ? 'Insufficient front setback — increase to ≥5.0m'
-                              : c.rule_id === 'S-HEIGHT-1'
-                                ? 'Height exceeds 3.0m — reduce height'
-                                : c.rule_id === 'S-AREA-1'
-                                  ? 'Area exceeds 20m² — reduce area'
-                                  : c.rule_id === 'S-SIDE-1'
-                                    ? 'Insufficient side setback — increase to ≥0.9m'
-                                    : c.rule_id === 'S-REAR-1'
-                                      ? 'Insufficient rear setback — increase to ≥0.9m'
-                                      : c.rule_id === 'S-SEWER-1'
-                                        ? 'Over sewer — relocate away from sewer'
-                                        : c.rule_id === 'S-ATTACH-1'
-                                          ? 'Shed attached to dwelling — detach'
-                                          : c.rule_id === 'S-FLOOD-1'
-                                            ? 'Flood prone — seek council advice'
-                                            : c.rule_id === 'S-BUSHFIRE-1'
-                                              ? 'Bushfire prone — seek council advice'
-                                              : 'Compliance issue — seek council advice'}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Next steps */}
-      <div className="mb-8">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Next steps:</h3>
-        <ul className="space-y-1">
-          {getNextSteps().map((step, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-              <span className="text-sm">{step}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* References */}
-      <div className="mb-8">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">References:</h3>
-        <p className="text-sm text-slate-700">
-          SEPP (Exempt Development) 2008, Part 2 — {uniqueClauses.join(', ')}
-        </p>
-      </div>
-
-      {/* Missing Information Section */}
-      {result.errors.length > 0 && (
-        <div className="mt-8 p-4 bg-red-50 border-2 border-red-300 rounded-2xl">
+      {/* Content Area */}
+      <div className="p-4 sm:p-6">
+        {/* Key Findings section */}
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <svg className="w-5 h-5 text-red-800" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <h5 className="font-bold text-red-800">Missing Information</h5>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center shadow-sm flex-shrink-0" aria-hidden="true">
+              <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800">Assessment Results</h3>
+            <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
           </div>
-          <ul className="text-sm text-red-800 space-y-1">
-            {result.errors.map((error, i) => (
-              <li key={i} className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                {error.message}
-              </li>
+          <div className="space-y-3" role="list" aria-label="Key assessment findings">
+            {topChecks.map((check, index) => (
+              <CheckItem key={`${check.rule_id}-${index}`} check={check} />
             ))}
-          </ul>
+          </div>
         </div>
-      )}
+
+        {/* Purchaser Risk Panel */}
+        {role === 'Purchaser' && criticalFails.length > 0 && (
+          <PurchaserRiskPanel />
+        )}
+
+        {/* Show Full Trace Toggle */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <button
+            onClick={() => setShowFullTrace(!showFullTrace)}
+            className="flex items-center gap-3 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors group w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2"
+            aria-expanded={showFullTrace}
+            aria-controls="full-trace-content"
+            aria-label={`${showFullTrace ? 'Hide' : 'Show'} full trace of ${result.checks.length} checks`}
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 group-hover:from-slate-200 group-hover:to-slate-300 flex items-center justify-center transition-all duration-200 shadow-sm flex-shrink-0">
+              <svg 
+                className={`w-4 h-4 transition-transform duration-300 ${showFullTrace ? 'rotate-180' : ''}`} 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="flex-1 text-left">{showFullTrace ? 'Hide' : 'Show'} full trace ({result.checks.length} checks)</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
+          </button>
+
+          {showFullTrace && (
+            <div id="full-trace-content" className="mt-6">
+              {/* Enhanced Filter Controls */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(['All', 'Fails', 'Passes', 'Warnings'] as const).map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setTraceFilter(filter)}
+                    className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      traceFilter === filter
+                        ? 'bg-gradient-to-r from-[#0A6CFF] to-blue-600 text-white shadow-md transform scale-105'
+                        : 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-600 hover:from-slate-200 hover:to-slate-300 border border-slate-200 hover:border-slate-300'
+                    }`}
+                    aria-pressed={traceFilter === filter}
+                    aria-label={`Filter by ${filter.toLowerCase()}`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+
+              {/* Full Trace List */}
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-2" role="list" aria-label={`Full trace filtered by ${traceFilter.toLowerCase()}`}>
+                {filteredChecks.map((check, index) => (
+                  <CheckItem key={`trace-${check.rule_id}-${index}`} check={check} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
