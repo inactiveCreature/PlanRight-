@@ -23,7 +23,7 @@ export class ChatService {
   }
 
   async sendMessage(
-    messages: ChatMessage[], 
+    messages: ChatMessage[],
     onChunk: (chunk: string) => void,
     onComplete: () => void,
     onError: (error: string) => void
@@ -36,8 +36,8 @@ export class ChatService {
         },
         body: JSON.stringify({
           messages,
-          actionsAllowed: true
-        })
+          actionsAllowed: true,
+        }),
       })
 
       if (!response.ok) {
@@ -64,7 +64,6 @@ export class ChatService {
       }
 
       onComplete()
-
     } catch (error) {
       console.error('Chat service error:', error)
       onError(error instanceof Error ? error.message : 'Unknown error')

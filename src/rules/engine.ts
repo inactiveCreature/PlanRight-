@@ -50,9 +50,9 @@ const SEPP_THRESHOLDS = {
 // Rule definitions with clause references - unbundled checks with killer semantics
 const RULE_DEFINITIONS = {
   // General checks (apply to all structures)
-  'G-AREA-1': { 
-    clause_ref: '2.6(1)(b)/2.9(1)(b)/2.10(1)(b)', 
-    description: 'Area tolerance check', 
+  'G-AREA-1': {
+    clause_ref: '2.6(1)(b)/2.9(1)(b)/2.10(1)(b)',
+    description: 'Area tolerance check',
     killer: false,
     check: (p: Proposal) => {
       const length = Number(p.dimensions.length_m) || 0
@@ -61,23 +61,23 @@ const RULE_DEFINITIONS = {
       const calculatedArea = length * width
       // Pass if any dimension is missing or if area difference is within tolerance
       return length === 0 || width === 0 || area === 0 || Math.abs(area - calculatedArea) <= 0.02
-    }
+    },
   },
-  'G-SITING-1': { 
-    clause_ref: '2.6(1)(e)/2.9(1)(e)/2.10(1)(e)', 
-    description: 'Not on easement', 
+  'G-SITING-1': {
+    clause_ref: '2.6(1)(e)/2.9(1)(e)/2.10(1)(e)',
+    description: 'Not on easement',
     killer: true,
-    check: (p: Proposal) => !p.siting.on_easement_bool 
+    check: (p: Proposal) => !p.siting.on_easement_bool,
   },
-  'G-HERITAGE-1': { 
-    clause_ref: '2.6(2)/2.9(2)/2.10(2)', 
-    description: 'No heritage/conservation restrictions', 
+  'G-HERITAGE-1': {
+    clause_ref: '2.6(2)/2.9(2)/2.10(2)',
+    description: 'No heritage/conservation restrictions',
     killer: true,
-    check: (p: Proposal) => !p.context.heritage_item_bool && !p.context.conservation_area_bool 
+    check: (p: Proposal) => !p.context.heritage_item_bool && !p.context.conservation_area_bool,
   },
-  'G-EASEMENT-1': { 
-    clause_ref: '2.6(1)(e)/2.9(1)(e)/2.10(1)(e)', 
-    description: '≥1m clearance from registered easements', 
+  'G-EASEMENT-1': {
+    clause_ref: '2.6(1)(e)/2.9(1)(e)/2.10(1)(e)',
+    description: '≥1m clearance from registered easements',
     killer: true,
     check: (p: Proposal) => {
       // If easement exists, structure must be ≥1m clear
@@ -87,130 +87,167 @@ const RULE_DEFINITIONS = {
         return sideSetback >= 1.0 && rearSetback >= 1.0
       }
       return true
-    }
+    },
   },
-  
+
   // Structure-specific checks
-  'S-BBL-1': { 
-    clause_ref: '2.9(1)(c)', 
-    description: 'BBL true when required', 
+  'S-BBL-1': {
+    clause_ref: '2.9(1)(c)',
+    description: 'BBL true when required',
     killer: false,
-    check: (p: Proposal) => p.location.behind_building_line_bool 
+    check: (p: Proposal) => p.location.behind_building_line_bool,
   },
-  'S-FRONT-1': { 
-    clause_ref: '2.9(1)(c)', 
-    description: 'Front setback ≥ min when BBL=false', 
-    killer: false,
-    check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
-      return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
-    }
-  },
-  'P-BBL-1': { 
-    clause_ref: '2.6(1)(c)', 
-    description: 'BBL true when required', 
-    killer: false,
-    check: (p: Proposal) => p.location.behind_building_line_bool 
-  },
-  'P-FRONT-1': { 
-    clause_ref: '2.6(1)(c)', 
-    description: 'Front setback ≥ min when BBL=false', 
+  'S-FRONT-1': {
+    clause_ref: '2.9(1)(c)',
+    description: 'Front setback ≥ min when BBL=false',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
-      return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
-    }
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
+      return (
+        p.location.behind_building_line_bool ||
+        Number(p.location.setback_front_m) >= thresholds.frontMin
+      )
+    },
   },
-  'C-BBL-1': { 
-    clause_ref: '2.10(1)(c)', 
-    description: 'BBL true when required', 
+  'P-BBL-1': {
+    clause_ref: '2.6(1)(c)',
+    description: 'BBL true when required',
     killer: false,
-    check: (p: Proposal) => p.location.behind_building_line_bool 
+    check: (p: Proposal) => p.location.behind_building_line_bool,
   },
-  'C-FRONT-1': { 
-    clause_ref: '2.10(1)(c)', 
-    description: 'Front setback ≥ min when BBL=false', 
+  'P-FRONT-1': {
+    clause_ref: '2.6(1)(c)',
+    description: 'Front setback ≥ min when BBL=false',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
-      return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
-    }
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
+      return (
+        p.location.behind_building_line_bool ||
+        Number(p.location.setback_front_m) >= thresholds.frontMin
+      )
+    },
   },
-  
+  'C-BBL-1': {
+    clause_ref: '2.10(1)(c)',
+    description: 'BBL true when required',
+    killer: false,
+    check: (p: Proposal) => p.location.behind_building_line_bool,
+  },
+  'C-FRONT-1': {
+    clause_ref: '2.10(1)(c)',
+    description: 'Front setback ≥ min when BBL=false',
+    killer: false,
+    check: (p: Proposal) => {
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
+      return (
+        p.location.behind_building_line_bool ||
+        Number(p.location.setback_front_m) >= thresholds.frontMin
+      )
+    },
+  },
+
   // Additional rules for comprehensive testing
-  'S-HEIGHT-1': { 
-    clause_ref: '2.9(1)(a)', 
-    description: 'Maximum height 3.0m', 
+  'S-HEIGHT-1': {
+    clause_ref: '2.9(1)(a)',
+    description: 'Maximum height 3.0m',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.height_m) <= thresholds.heightMax
-    }
+    },
   },
-  'S-AREA-1': { 
-    clause_ref: '2.9(1)(b)', 
-    description: 'Maximum area 20m²', 
+  'S-AREA-1': {
+    clause_ref: '2.9(1)(b)',
+    description: 'Maximum area 20m²',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
-    }
+    },
   },
-  'S-SIDE-1': { 
-    clause_ref: '2.9(1)(d)', 
-    description: 'Minimum 0.9m side setback', 
+  'S-SIDE-1': {
+    clause_ref: '2.9(1)(d)',
+    description: 'Minimum 0.9m side setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_side_m) >= thresholds.sideMin
-    }
+    },
   },
-  'S-REAR-1': { 
-    clause_ref: '2.9(1)(d)', 
-    description: 'Minimum 0.9m rear setback', 
+  'S-REAR-1': {
+    clause_ref: '2.9(1)(d)',
+    description: 'Minimum 0.9m rear setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
-    }
+    },
   },
-  'S-SEWER-1': { 
-    clause_ref: '2.9(1)(e)', 
-    description: 'Not over sewer', 
+  'S-SEWER-1': {
+    clause_ref: '2.9(1)(e)',
+    description: 'Not over sewer',
     killer: false,
-    check: (p: Proposal) => !p.siting.over_sewer_bool 
+    check: (p: Proposal) => !p.siting.over_sewer_bool,
   },
-  'S-ATTACH-1': { 
-    clause_ref: '2.9(1)(f)', 
-    description: 'Detached from dwelling', 
+  'S-ATTACH-1': {
+    clause_ref: '2.9(1)(f)',
+    description: 'Detached from dwelling',
     killer: false,
-    check: (p: Proposal) => !p.siting.attached_to_dwelling_bool 
+    check: (p: Proposal) => !p.siting.attached_to_dwelling_bool,
   },
-  'S-FLOOD-1': { 
-    clause_ref: '2.9(3)', 
-    description: 'Not flood prone', 
+  'S-FLOOD-1': {
+    clause_ref: '2.9(3)',
+    description: 'Not flood prone',
     killer: false,
-    check: (p: Proposal) => !p.context.flood_prone_bool 
+    check: (p: Proposal) => !p.context.flood_prone_bool,
   },
-  'S-BUSHFIRE-1': { 
-    clause_ref: '2.9(3)', 
-    description: 'Not bushfire prone', 
+  'S-BUSHFIRE-1': {
+    clause_ref: '2.9(3)',
+    description: 'Not bushfire prone',
     killer: false,
-    check: (p: Proposal) => !p.context.bushfire_bool 
+    check: (p: Proposal) => !p.context.bushfire_bool,
   },
-  'S-SHIPPING-1': { 
-    clause_ref: '2.9(1)(g)', 
-    description: 'Not a shipping container', 
+  'S-SHIPPING-1': {
+    clause_ref: '2.9(1)(g)',
+    description: 'Not a shipping container',
     killer: true,
     check: (_p: Proposal) => {
       // Check if structure type indicates shipping container
       // This would need to be added to the proposal schema
       return true // Placeholder - need to add shipping_container_bool to schema
-    }
+    },
   },
-  'S-BUSHFIRE-NC-1': { 
-    clause_ref: '2.9(3)', 
-    description: 'Non-combustible if bushfire and within 5m of dwelling', 
+  'S-BUSHFIRE-NC-1': {
+    clause_ref: '2.9(3)',
+    description: 'Non-combustible if bushfire and within 5m of dwelling',
     killer: false,
     check: (_p: Proposal) => {
       if (_p.context.bushfire_bool) {
@@ -219,123 +256,155 @@ const RULE_DEFINITIONS = {
         return true // Placeholder - need to add non_combustible_bool to schema
       }
       return true
-    }
+    },
   },
-  
+
   // Patio-specific rules
-  'P-HEIGHT-1': { 
-    clause_ref: '2.6(1)(a)', 
-    description: 'Maximum height 3.0m', 
+  'P-HEIGHT-1': {
+    clause_ref: '2.6(1)(a)',
+    description: 'Maximum height 3.0m',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.height_m) <= thresholds.heightMax
-    }
+    },
   },
-  'P-AREA-1': { 
-    clause_ref: '2.6(1)(b)', 
-    description: 'Maximum area 20m²', 
+  'P-AREA-1': {
+    clause_ref: '2.6(1)(b)',
+    description: 'Maximum area 20m²',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
-    }
+    },
   },
-  'P-SIDE-1': { 
-    clause_ref: '2.6(1)(d)', 
-    description: 'Minimum 0.9m side setback', 
+  'P-SIDE-1': {
+    clause_ref: '2.6(1)(d)',
+    description: 'Minimum 0.9m side setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_side_m) >= thresholds.sideMin
-    }
+    },
   },
-  'P-REAR-1': { 
-    clause_ref: '2.6(1)(d)', 
-    description: 'Minimum 0.9m rear setback', 
+  'P-REAR-1': {
+    clause_ref: '2.6(1)(d)',
+    description: 'Minimum 0.9m rear setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
-    }
+    },
   },
-  'P-SEWER-1': { 
-    clause_ref: '2.6(1)(e)', 
-    description: 'Not over sewer', 
+  'P-SEWER-1': {
+    clause_ref: '2.6(1)(e)',
+    description: 'Not over sewer',
     killer: false,
-    check: (p: Proposal) => !p.siting.over_sewer_bool 
+    check: (p: Proposal) => !p.siting.over_sewer_bool,
   },
-  'P-FLOOD-1': { 
-    clause_ref: '2.6(3)', 
-    description: 'Not flood prone', 
+  'P-FLOOD-1': {
+    clause_ref: '2.6(3)',
+    description: 'Not flood prone',
     killer: false,
-    check: (p: Proposal) => !p.context.flood_prone_bool 
+    check: (p: Proposal) => !p.context.flood_prone_bool,
   },
-  'P-BUSHFIRE-1': { 
-    clause_ref: '2.6(3)', 
-    description: 'Not bushfire prone', 
+  'P-BUSHFIRE-1': {
+    clause_ref: '2.6(3)',
+    description: 'Not bushfire prone',
     killer: false,
-    check: (p: Proposal) => !p.context.bushfire_bool 
+    check: (p: Proposal) => !p.context.bushfire_bool,
   },
-  
+
   // Carport-specific rules
-  'C-HEIGHT-1': { 
-    clause_ref: '2.10(1)(a)', 
-    description: 'Maximum height 3.0m', 
+  'C-HEIGHT-1': {
+    clause_ref: '2.10(1)(a)',
+    description: 'Maximum height 3.0m',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.height_m) <= thresholds.heightMax
-    }
+    },
   },
-  'C-AREA-1': { 
-    clause_ref: '2.10(1)(b)', 
-    description: 'Maximum area 30m²', 
+  'C-AREA-1': {
+    clause_ref: '2.10(1)(b)',
+    description: 'Maximum area 30m²',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
-    }
+    },
   },
-  'C-SIDE-1': { 
-    clause_ref: '2.10(1)(d)', 
-    description: 'Minimum 0.9m side setback', 
+  'C-SIDE-1': {
+    clause_ref: '2.10(1)(d)',
+    description: 'Minimum 0.9m side setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_side_m) >= thresholds.sideMin
-    }
+    },
   },
-  'C-REAR-1': { 
-    clause_ref: '2.10(1)(d)', 
-    description: 'Minimum 0.9m rear setback', 
+  'C-REAR-1': {
+    clause_ref: '2.10(1)(d)',
+    description: 'Minimum 0.9m rear setback',
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
+      const thresholds = getThresholds(
+        p.structure.type,
+        p.property.zone_text,
+        Number(p.property.lot_size_m2)
+      )
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
-    }
+    },
   },
-  'C-SEWER-1': { 
-    clause_ref: '2.10(1)(e)', 
-    description: 'Not over sewer', 
+  'C-SEWER-1': {
+    clause_ref: '2.10(1)(e)',
+    description: 'Not over sewer',
     killer: false,
-    check: (p: Proposal) => !p.siting.over_sewer_bool 
+    check: (p: Proposal) => !p.siting.over_sewer_bool,
   },
-  'C-FLOOD-1': { 
-    clause_ref: '2.10(3)', 
-    description: 'Not flood prone', 
+  'C-FLOOD-1': {
+    clause_ref: '2.10(3)',
+    description: 'Not flood prone',
     killer: false,
-    check: (p: Proposal) => !p.context.flood_prone_bool 
+    check: (p: Proposal) => !p.context.flood_prone_bool,
   },
-  'C-BUSHFIRE-1': { 
-    clause_ref: '2.10(3)', 
-    description: 'Not bushfire prone', 
+  'C-BUSHFIRE-1': {
+    clause_ref: '2.10(3)',
+    description: 'Not bushfire prone',
     killer: false,
-    check: (p: Proposal) => !p.context.bushfire_bool 
+    check: (p: Proposal) => !p.context.bushfire_bool,
   },
-  'C-ROOF-CLEARANCE-1': { 
-    clause_ref: '2.10(1)(d)', 
-    description: 'Roof ≥500mm from boundary', 
+  'C-ROOF-CLEARANCE-1': {
+    clause_ref: '2.10(1)(d)',
+    description: 'Roof ≥500mm from boundary',
     killer: false,
     check: (p: Proposal) => {
       // This would need roof_to_boundary_m field in proposal schema
@@ -343,16 +412,16 @@ const RULE_DEFINITIONS = {
       const sideSetback = Number(p.location.setback_side_m)
       const rearSetback = Number(p.location.setback_rear_m)
       return sideSetback >= 0.5 && rearSetback >= 0.5
-    }
+    },
   },
-  'C-CLASS-7A-1': { 
-    clause_ref: '2.10(1)(f)', 
-    description: 'Not Class 7a building', 
+  'C-CLASS-7A-1': {
+    clause_ref: '2.10(1)(f)',
+    description: 'Not Class 7a building',
     killer: true,
     check: (_p: Proposal) => {
       // This would need building_class field in proposal schema
       return true // Placeholder - need to add building_class to schema
-    }
+    },
   },
 }
 
@@ -362,20 +431,20 @@ export function run_rules_assessment(p: Proposal): RuleResult {
 
   // Validate required fields
   const requiredPaths: [keyof Proposal, string][] = [
-    ['structure','type'],
-    ['dimensions','height_m'],
-    ['location','setback_front_m'],
-    ['location','setback_side_m'],
-    ['location','setback_rear_m'],
+    ['structure', 'type'],
+    ['dimensions', 'height_m'],
+    ['location', 'setback_front_m'],
+    ['location', 'setback_side_m'],
+    ['location', 'setback_rear_m'],
   ]
-  
+
   for (const [a, b] of requiredPaths) {
     const v = (p[a] as any)?.[b]
     if (v === '' || v === null || v === undefined) {
       errors.push({ field: `${String(a)}.${b}`, message: 'Missing required field' })
     }
   }
-  
+
   if (errors.length) return { decision: 'Cannot assess', checks, errors }
 
   // Validate numeric inputs
@@ -386,18 +455,27 @@ export function run_rules_assessment(p: Proposal): RuleResult {
   const rearSetback = Number(p.location.setback_rear_m)
   const lotSize = Number(p.property.lot_size_m2)
 
-  if (height <= 0) errors.push({ field: 'dimensions.height_m', message: 'Height must be greater than 0' })
-  if (area <= 0) errors.push({ field: 'dimensions.area_m2', message: 'Area must be greater than 0' })
-  if (frontSetback < 0) errors.push({ field: 'location.setback_front_m', message: 'Front setback cannot be negative' })
-  if (sideSetback < 0) errors.push({ field: 'location.setback_side_m', message: 'Side setback cannot be negative' })
-  if (rearSetback < 0) errors.push({ field: 'location.setback_rear_m', message: 'Rear setback cannot be negative' })
-  if (lotSize <= 0) errors.push({ field: 'property.lot_size_m2', message: 'Lot size must be greater than 0' })
+  if (height <= 0)
+    errors.push({ field: 'dimensions.height_m', message: 'Height must be greater than 0' })
+  if (area <= 0)
+    errors.push({ field: 'dimensions.area_m2', message: 'Area must be greater than 0' })
+  if (frontSetback < 0)
+    errors.push({ field: 'location.setback_front_m', message: 'Front setback cannot be negative' })
+  if (sideSetback < 0)
+    errors.push({ field: 'location.setback_side_m', message: 'Side setback cannot be negative' })
+  if (rearSetback < 0)
+    errors.push({ field: 'location.setback_rear_m', message: 'Rear setback cannot be negative' })
+  if (lotSize <= 0)
+    errors.push({ field: 'property.lot_size_m2', message: 'Lot size must be greater than 0' })
 
   // Validate zone
   const normalizedZone = normalizeZone(p.property.zone_text)
   const validZones = ['R1', 'R2', 'R3', 'R4', 'R5', 'RU1', 'RU2', 'RU3', 'RU4', 'RU5', 'RU6']
   if (!validZones.includes(normalizedZone)) {
-    errors.push({ field: 'property.zone_text', message: `Unknown zone: ${p.property.zone_text}. Must be one of: ${validZones.join(', ')}` })
+    errors.push({
+      field: 'property.zone_text',
+      message: `Unknown zone: ${p.property.zone_text}. Must be one of: ${validZones.join(', ')}`,
+    })
   }
 
   if (errors.length) return { decision: 'Cannot assess', checks, errors }
@@ -405,7 +483,7 @@ export function run_rules_assessment(p: Proposal): RuleResult {
   // Get structure-specific rules
   const structureType = p.structure.type
   const rulePrefix = structureType === 'shed' ? 'S' : structureType === 'patio' ? 'P' : 'C'
-  
+
   // Run all applicable rules (general + structure-specific)
   Object.entries(RULE_DEFINITIONS).forEach(([ruleId, rule]) => {
     // Include general rules (G-*) and structure-specific rules
@@ -417,15 +495,16 @@ export function run_rules_assessment(p: Proposal): RuleResult {
         clause_ref: rule.clause_ref,
         pass,
         note,
-        killer: rule.killer
+        killer: rule.killer,
       })
     }
   })
 
   // Determine decision - any rule failure makes it "Likely Not Exempt"
-  const allFails = checks.filter(c => !c.pass)
-  const decision: RuleResult['decision'] = allFails.length === 0 ? 'Likely Exempt' : 'Likely Not Exempt'
-  
+  const allFails = checks.filter((c) => !c.pass)
+  const decision: RuleResult['decision'] =
+    allFails.length === 0 ? 'Likely Exempt' : 'Likely Not Exempt'
+
   return { decision, checks, errors }
 }
 
@@ -436,37 +515,60 @@ function generateRuleNote(ruleId: string, rule: any, p: Proposal, _pass: boolean
   const frontSetback = Number(p.location.setback_front_m)
   const sideSetback = Number(p.location.setback_side_m)
   const rearSetback = Number(p.location.setback_rear_m)
-  const thresholds = getThresholds(structureType, p.property.zone_text, Number(p.property.lot_size_m2))
+  const thresholds = getThresholds(
+    structureType,
+    p.property.zone_text,
+    Number(p.property.lot_size_m2)
+  )
 
   switch (ruleId) {
-    case 'G-AREA-1':
+    case 'G-AREA-1': {
       const length = Number(p.dimensions.length_m) || 0
       const width = Number(p.dimensions.width_m) || 0
       const calculatedArea = length * width
       return `Area tolerance: calc=${calculatedArea.toFixed(2)}m² vs input=${area.toFixed(2)}m²`
+    }
     case 'G-SITING-1':
       return `On easement = ${p.siting.on_easement_bool}`
     case 'G-HERITAGE-1':
       return `Heritage/conservation: heritage=${p.context.heritage_item_bool}, conservation=${p.context.conservation_area_bool}`
-    case 'S-BBL-1': case 'P-BBL-1': case 'C-BBL-1':
+    case 'S-BBL-1':
+    case 'P-BBL-1':
+    case 'C-BBL-1':
       return `Behind building line = ${p.location.behind_building_line_bool}`
-    case 'S-FRONT-1': case 'P-FRONT-1': case 'C-FRONT-1':
+    case 'S-FRONT-1':
+    case 'P-FRONT-1':
+    case 'C-FRONT-1':
       return `Front setback ${frontSetback}m ≥ ${thresholds.frontMin}m (when not behind building line)`
-    case 'S-HEIGHT-1': case 'P-HEIGHT-1': case 'C-HEIGHT-1':
+    case 'S-HEIGHT-1':
+    case 'P-HEIGHT-1':
+    case 'C-HEIGHT-1':
       return `Height ${height}m ≤ ${thresholds.heightMax}m`
-    case 'S-AREA-1': case 'P-AREA-1': case 'C-AREA-1':
+    case 'S-AREA-1':
+    case 'P-AREA-1':
+    case 'C-AREA-1':
       return `Area ${area.toFixed(1)}m² ≤ ${thresholds.areaMax}m²`
-    case 'S-SIDE-1': case 'P-SIDE-1': case 'C-SIDE-1':
+    case 'S-SIDE-1':
+    case 'P-SIDE-1':
+    case 'C-SIDE-1':
       return `Side setback ${sideSetback}m ≥ ${thresholds.sideMin}m`
-    case 'S-REAR-1': case 'P-REAR-1': case 'C-REAR-1':
+    case 'S-REAR-1':
+    case 'P-REAR-1':
+    case 'C-REAR-1':
       return `Rear setback ${rearSetback}m ≥ ${thresholds.rearMin}m`
-    case 'S-SEWER-1': case 'P-SEWER-1': case 'C-SEWER-1':
+    case 'S-SEWER-1':
+    case 'P-SEWER-1':
+    case 'C-SEWER-1':
       return `Over sewer = ${p.siting.over_sewer_bool}`
     case 'S-ATTACH-1':
       return `Attached to dwelling = ${p.siting.attached_to_dwelling_bool} (sheds must be detached)`
-    case 'S-FLOOD-1': case 'P-FLOOD-1': case 'C-FLOOD-1':
+    case 'S-FLOOD-1':
+    case 'P-FLOOD-1':
+    case 'C-FLOOD-1':
       return `Flood prone = ${p.context.flood_prone_bool}`
-    case 'S-BUSHFIRE-1': case 'P-BUSHFIRE-1': case 'C-BUSHFIRE-1':
+    case 'S-BUSHFIRE-1':
+    case 'P-BUSHFIRE-1':
+    case 'C-BUSHFIRE-1':
       return `Bushfire prone = ${p.context.bushfire_bool}`
     default:
       return rule.description
@@ -474,189 +576,121 @@ function generateRuleNote(ruleId: string, rule: any, p: Proposal, _pass: boolean
 }
 
 // Clause lookup API function
-export function lookup_clause(clause_ref: string): { title: string, summary: string } {
-  const clauseDatabase: Record<string, { title: string, summary: string }> = {
+export function lookup_clause(clause_ref: string): { title: string; summary: string } {
+  const clauseDatabase: Record<string, { title: string; summary: string }> = {
     // Shed clauses (Subdivision 9)
-    '2.9(1)(a)': { 
-      title: 'Maximum Height - Sheds', 
-      summary: 'The height of a shed must not exceed 3 metres above ground level (existing).' 
+    '2.9(1)(a)': {
+      title: 'Maximum Height - Sheds',
+      summary: 'The height of a shed must not exceed 3 metres above ground level (existing).',
     },
-    '2.9(1)(b)': { 
-      title: 'Maximum Area - Sheds', 
-      summary: 'The floor area of a shed must not exceed 20 square metres.' 
+    '2.9(1)(b)': {
+      title: 'Maximum Area - Sheds',
+      summary: 'The floor area of a shed must not exceed 20 square metres.',
     },
-    '2.9(1)(c)': { 
-      title: 'Front Setback - Sheds', 
-      summary: 'A shed must be located behind the building line and at least 5 metres from any street frontage.' 
+    '2.9(1)(c)': {
+      title: 'Front Setback - Sheds',
+      summary:
+        'A shed must be located behind the building line and at least 5 metres from any street frontage.',
     },
-    '2.9(1)(d)': { 
-      title: 'Side and Rear Setbacks - Sheds', 
-      summary: 'A shed must be at least 0.9 metres from any side or rear boundary.' 
+    '2.9(1)(d)': {
+      title: 'Side and Rear Setbacks - Sheds',
+      summary: 'A shed must be at least 0.9 metres from any side or rear boundary.',
     },
-    '2.9(1)(e)': { 
-      title: 'Easements and Services - Sheds', 
-      summary: 'A shed must not be located on an easement or over any sewer main or water main.' 
+    '2.9(1)(e)': {
+      title: 'Easements and Services - Sheds',
+      summary: 'A shed must not be located on an easement or over any sewer main or water main.',
     },
-    '2.9(1)(f)': { 
-      title: 'Detachment - Sheds', 
-      summary: 'A shed must be detached from any other building.' 
+    '2.9(1)(f)': {
+      title: 'Detachment - Sheds',
+      summary: 'A shed must be detached from any other building.',
     },
-    '2.9(2)': { 
-      title: 'Heritage and Conservation - Sheds', 
-      summary: 'Development is not exempt if the land is a heritage item or in a conservation area.' 
+    '2.9(2)': {
+      title: 'Heritage and Conservation - Sheds',
+      summary:
+        'Development is not exempt if the land is a heritage item or in a conservation area.',
     },
-    '2.9(3)': { 
-      title: 'Flood and Bushfire - Sheds', 
-      summary: 'Development is not exempt if the land is flood prone or bushfire prone.' 
+    '2.9(3)': {
+      title: 'Flood and Bushfire - Sheds',
+      summary: 'Development is not exempt if the land is flood prone or bushfire prone.',
     },
-    
-    // Patio clauses (Subdivision 6)
-    '2.6(1)(a)': { 
-      title: 'Maximum Height - Patios', 
-      summary: 'The height of a patio must not exceed 3 metres above ground level (existing).' 
-    },
-    '2.6(1)(b)': { 
-      title: 'Maximum Area - Patios', 
-      summary: 'The floor area of a patio must not exceed 20 square metres.' 
-    },
-    '2.6(1)(c)': { 
-      title: 'Front Setback - Patios', 
-      summary: 'A patio must be located behind the building line and at least 5 metres from any street frontage.' 
-    },
-    '2.6(1)(d)': { 
-      title: 'Side and Rear Setbacks - Patios', 
-      summary: 'A patio must be at least 0.9 metres from any side or rear boundary.' 
-    },
-    '2.6(1)(e)': { 
-      title: 'Easements and Services - Patios', 
-      summary: 'A patio must not be located on an easement or over any sewer main or water main.' 
-    },
-    '2.6(1)(f)': { 
-      title: 'Attachment - Patios', 
-      summary: 'A patio may be attached to a dwelling house.' 
-    },
-    '2.6(2)': { 
-      title: 'Heritage and Conservation - Patios', 
-      summary: 'Development is not exempt if the land is a heritage item or in a conservation area.' 
-    },
-    '2.6(3)': { 
-      title: 'Flood and Bushfire - Patios', 
-      summary: 'Development is not exempt if the land is flood prone or bushfire prone.' 
-    },
-    
-    // Carport clauses (Subdivision 10)
-    '2.10(1)(a)': { 
-      title: 'Maximum Height - Carports', 
-      summary: 'The height of a carport must not exceed 3 metres above ground level (existing).' 
-    },
-    '2.10(1)(b)': { 
-      title: 'Maximum Area - Carports', 
-      summary: 'The floor area of a carport must not exceed 30 square metres.' 
-    },
-    '2.10(1)(c)': { 
-      title: 'Front Setback - Carports', 
-      summary: 'A carport must be located behind the building line and at least 5 metres from any street frontage.' 
-    },
-    '2.10(1)(d)': { 
-      title: 'Side and Rear Setbacks - Carports', 
-      summary: 'A carport must be at least 0.9 metres from any side or rear boundary.' 
-    },
-    '2.10(1)(e)': { 
-      title: 'Easements and Services - Carports', 
-      summary: 'A carport must not be located on an easement or over any sewer main or water main.' 
-    },
-    '2.10(1)(f)': { 
-      title: 'Attachment - Carports', 
-      summary: 'A carport may be attached to a dwelling house.' 
-    },
-    '2.10(2)': { 
-      title: 'Heritage and Conservation - Carports', 
-      summary: 'Development is not exempt if the land is a heritage item or in a conservation area.' 
-    },
-    '2.10(3)': { 
-      title: 'Flood and Bushfire - Carports', 
-      summary: 'Development is not exempt if the land is flood prone or bushfire prone.' 
-    },
-  }
-  
-  return clauseDatabase[clause_ref] || { 
-    title: 'Clause Not Found', 
-    summary: `Clause reference ${clause_ref} not found in database.` 
-  }
-}
 
-// Sample properties API function
-export function list_sample_properties(): Array<{ id: string, label: string, lot_size_m2: number, zone_text: string, flags: string[] }> {
-  return [
-    { 
-      id: 'ALB-001', 
-      label: '12 Jarrah St, Albury NSW 2640', 
-      lot_size_m2: 310, 
-      zone_text: 'R2', 
-      flags: [] 
+    // Patio clauses (Subdivision 6)
+    '2.6(1)(a)': {
+      title: 'Maximum Height - Patios',
+      summary: 'The height of a patio must not exceed 3 metres above ground level (existing).',
     },
-    { 
-      id: 'ALB-002', 
-      label: '5 Riverbend Ave, Albury NSW 2640', 
-      lot_size_m2: 420, 
-      zone_text: 'R2', 
-      flags: ['flood_prone'] 
+    '2.6(1)(b)': {
+      title: 'Maximum Area - Patios',
+      summary: 'The floor area of a patio must not exceed 20 square metres.',
     },
-    { 
-      id: 'ALB-003', 
-      label: '9 Regent Pl, Albury NSW 2640', 
-      lot_size_m2: 780, 
-      zone_text: 'R1', 
-      flags: ['bushfire'] 
+    '2.6(1)(c)': {
+      title: 'Front Setback - Patios',
+      summary:
+        'A patio must be located behind the building line and at least 5 metres from any street frontage.',
     },
-    { 
-      id: 'ALB-004', 
-      label: '23 Heritage Way, Albury NSW 2640', 
-      lot_size_m2: 450, 
-      zone_text: 'R2', 
-      flags: ['heritage_item'] 
+    '2.6(1)(d)': {
+      title: 'Side and Rear Setbacks - Patios',
+      summary: 'A patio must be at least 0.9 metres from any side or rear boundary.',
     },
-    { 
-      id: 'ALB-005', 
-      label: '7 Conservation Cres, Albury NSW 2640', 
-      lot_size_m2: 600, 
-      zone_text: 'R1', 
-      flags: ['conservation_area'] 
+    '2.6(1)(e)': {
+      title: 'Easements and Services - Patios',
+      summary: 'A patio must not be located on an easement or over any sewer main or water main.',
     },
-    { 
-      id: 'ALB-006', 
-      label: '15 Corner St, Albury NSW 2640', 
-      lot_size_m2: 350, 
-      zone_text: 'R2', 
-      flags: ['corner_lot'] 
+    '2.6(1)(f)': {
+      title: 'Attachment - Patios',
+      summary: 'A patio may be attached to a dwelling house.',
     },
-    { 
-      id: 'ALB-007', 
-      label: '31 Easement Rd, Albury NSW 2640', 
-      lot_size_m2: 400, 
-      zone_text: 'R2', 
-      flags: ['easement'] 
+    '2.6(2)': {
+      title: 'Heritage and Conservation - Patios',
+      summary:
+        'Development is not exempt if the land is a heritage item or in a conservation area.',
     },
-    { 
-      id: 'ALB-008', 
-      label: '42 Rural View, Albury NSW 2640', 
-      lot_size_m2: 1200, 
-      zone_text: 'RU1', 
-      flags: [] 
+    '2.6(3)': {
+      title: 'Flood and Bushfire - Patios',
+      summary: 'Development is not exempt if the land is flood prone or bushfire prone.',
     },
-    { 
-      id: 'ALB-009', 
-      label: '18 Mixed Zone Ave, Albury NSW 2640', 
-      lot_size_m2: 500, 
-      zone_text: 'R3', 
-      flags: [] 
+
+    // Carport clauses (Subdivision 10)
+    '2.10(1)(a)': {
+      title: 'Maximum Height - Carports',
+      summary: 'The height of a carport must not exceed 3 metres above ground level (existing).',
     },
-    { 
-      id: 'ALB-010', 
-      label: '55 Complex St, Albury NSW 2640', 
-      lot_size_m2: 380, 
-      zone_text: 'R2', 
-      flags: ['flood_prone', 'bushfire', 'easement'] 
+    '2.10(1)(b)': {
+      title: 'Maximum Area - Carports',
+      summary: 'The floor area of a carport must not exceed 30 square metres.',
+    },
+    '2.10(1)(c)': {
+      title: 'Front Setback - Carports',
+      summary:
+        'A carport must be located behind the building line and at least 5 metres from any street frontage.',
+    },
+    '2.10(1)(d)': {
+      title: 'Side and Rear Setbacks - Carports',
+      summary: 'A carport must be at least 0.9 metres from any side or rear boundary.',
+    },
+    '2.10(1)(e)': {
+      title: 'Easements and Services - Carports',
+      summary: 'A carport must not be located on an easement or over any sewer main or water main.',
+    },
+    '2.10(1)(f)': {
+      title: 'Attachment - Carports',
+      summary: 'A carport may be attached to a dwelling house.',
+    },
+    '2.10(2)': {
+      title: 'Heritage and Conservation - Carports',
+      summary:
+        'Development is not exempt if the land is a heritage item or in a conservation area.',
+    },
+    '2.10(3)': {
+      title: 'Flood and Bushfire - Carports',
+      summary: 'Development is not exempt if the land is flood prone or bushfire prone.',
+    },
+  }
+
+  return (
+    clauseDatabase[clause_ref] || {
+      title: 'Clause Not Found',
+      summary: `Clause reference ${clause_ref} not found in database.`,
     }
-  ]
+  )
 }

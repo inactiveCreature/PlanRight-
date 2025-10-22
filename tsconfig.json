@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": [
-      "ES2020",
-      "DOM"
-    ],
+    "lib": ["ES2020", "DOM"],
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -13,11 +10,7 @@
     "noUnusedParameters": true,
     "baseUrl": ".",
     "paths": {},
-    "types": [
-      "vitest/globals"
-    ]
+    "types": ["vitest/globals"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

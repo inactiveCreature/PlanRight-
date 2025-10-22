@@ -25,19 +25,19 @@ export default function SelectField({
   value,
   options,
   onChange,
-  placeholder = "Select an option",
+  placeholder = 'Select an option',
   description,
   error,
   required = false,
   disabled = false,
-  className = ""
+  className = '',
 }: SelectFieldProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const selectRef = useRef<HTMLDivElement>(null)
   const listboxRef = useRef<HTMLUListElement>(null)
 
-  const selectedOption = options.find(option => option.value === value)
+  const selectedOption = options.find((option) => option.value === value)
   const displayValue = selectedOption ? selectedOption.label : placeholder
   const hasError = !!error
 
@@ -65,9 +65,7 @@ export default function SelectField({
           setIsOpen(true)
           setHighlightedIndex(0)
         } else {
-          setHighlightedIndex(prev => 
-            prev < options.length - 1 ? prev + 1 : 0
-          )
+          setHighlightedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0))
         }
         break
 
@@ -77,9 +75,7 @@ export default function SelectField({
           setIsOpen(true)
           setHighlightedIndex(options.length - 1)
         } else {
-          setHighlightedIndex(prev => 
-            prev > 0 ? prev - 1 : options.length - 1
-          )
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1))
         }
         break
 
@@ -131,11 +127,12 @@ export default function SelectField({
     }
   }, [highlightedIndex, isOpen])
 
-  const baseClasses = "w-full px-3 py-2 text-sm border rounded-xl transition-all duration-200 focus:outline-none"
+  const baseClasses =
+    'w-full px-3 py-2 text-sm border rounded-xl transition-all duration-200 focus:outline-none'
   const stateClasses = hasError
-    ? "border-red-500 focus-visible:outline-red-600 bg-red-50"
-    : "border-neutral-300 focus-visible:outline-blue-600 hover:border-neutral-400"
-  const disabledClasses = disabled ? "bg-gray-100 cursor-not-allowed opacity-60" : "cursor-pointer"
+    ? 'border-red-500 focus-visible:outline-red-600 bg-red-50'
+    : 'border-neutral-300 focus-visible:outline-blue-600 hover:border-neutral-400'
+  const disabledClasses = disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'cursor-pointer'
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -157,12 +154,12 @@ export default function SelectField({
           aria-invalid={hasError}
           aria-describedby={error ? `${id}-error` : description ? `${id}-description` : undefined}
         >
-          <span className={selectedOption ? "text-slate-900" : "text-slate-500"}>
+          <span className={selectedOption ? 'text-slate-900' : 'text-slate-500'}>
             {displayValue}
           </span>
           <svg
             className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-              isOpen ? "rotate-180" : ""
+              isOpen ? 'rotate-180' : ''
             }`}
             fill="none"
             stroke="currentColor"
@@ -185,9 +182,9 @@ export default function SelectField({
                 role="option"
                 className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
                   index === highlightedIndex
-                    ? "bg-blue-50 text-blue-900"
-                    : "text-slate-900 hover:bg-slate-50"
-                } ${option.value === value ? "bg-blue-100 font-medium" : ""}`}
+                    ? 'bg-blue-50 text-blue-900'
+                    : 'text-slate-900 hover:bg-slate-50'
+                } ${option.value === value ? 'bg-blue-100 font-medium' : ''}`}
                 onClick={() => handleOptionClick(option.value)}
                 aria-selected={option.value === value}
               >

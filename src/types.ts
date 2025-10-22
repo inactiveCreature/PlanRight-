@@ -13,7 +13,9 @@ export interface Property {
   easement_bool: boolean
 }
 
-export interface Structure { type: StructureType | '' }
+export interface Structure {
+  type: StructureType | ''
+}
 
 export interface Dimensions {
   length_m: number | string
@@ -62,5 +64,5 @@ export interface RuleCheck {
 export interface RuleResult {
   decision: 'Likely Exempt' | 'Likely Not Exempt' | 'Cannot assess'
   checks: RuleCheck[]
-  errors: { field: string, message: string }[]
+  errors: { field: string; message: string }[]
 }

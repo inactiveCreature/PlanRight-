@@ -1,4 +1,3 @@
-import { visualizer } from 'rollup-plugin-visualizer';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 

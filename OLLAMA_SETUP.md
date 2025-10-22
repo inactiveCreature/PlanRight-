@@ -10,12 +10,14 @@ This application now includes AI chat functionality powered by Ollama (local ope
 ## Running the Application
 
 ### Option 1: Full Stack (Recommended)
+
 ```bash
 # Start both the chat server and frontend
 npm run dev:full
 ```
 
 ### Option 2: Manual Setup
+
 ```bash
 # Terminal 1: Start Ollama server
 ollama serve

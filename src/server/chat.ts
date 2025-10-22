@@ -21,16 +21,6 @@ interface ChatRequest {
   actionsAllowed?: boolean
 }
 
-interface ToolAction {
-  type: 'set_field' | 'run_assessment' | 'lookup_clause' | 'reset_form'
-  field?: string
-  value?: any
-  clause_id?: string
-  scope?: 'all' | 'step'
-  stepId?: string
-  keepRole?: boolean
-  keepChat?: boolean
-}
 
 // System prompt for the AI assistant
 const SYSTEM_PROMPT = `You are a helpful planning assistant for a development application system. You can help users fill out forms and explain planning rules, but you cannot make planning decisions.
@@ -54,19 +44,16 @@ When users want to reset a specific step (e.g., "reset property step", "clear di
 
 You can explain rules, help fill out forms, and trigger assessments, but the rules engine makes all final decisions. Always be helpful and accurate.`
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', async (_req, res) => {
   try {
-    const { messages, actionsAllowed = true }: ChatRequest = req.body
+    const { messages }: ChatRequest = _req.body
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Invalid messages format' })
     }
 
     // Prepare messages for Ollama
-    const ollamaMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...messages
-    ]
+    const ollamaMessages = [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
 
     // Set up streaming response
     res.setHeader('Content-Type', 'text/plain')
@@ -85,8 +72,8 @@ app.post('/api/chat', async (req, res) => {
         options: {
           temperature: 0.7,
           top_p: 0.9,
-        }
-      })
+        },
+      }),
     })
 
     if (!ollamaResponse.ok) {
@@ -113,7 +100,7 @@ app.post('/api/chat', async (req, res) => {
             if (data.message?.content) {
               res.write(data.message.content)
             }
-          } catch (e) {
+          } catch {
             // Skip invalid JSON lines
           }
         }
@@ -130,7 +117,6 @@ app.post('/api/chat', async (req, res) => {
         res.status(500).json({ error: 'Stream error' })
       }
     })
-
   } catch (error) {
     console.error('Chat API error:', error)
     if (!res.headersSent) {

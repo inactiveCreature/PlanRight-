@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { parseNumber, formatNumber, isValidDecimal, sanitizeDecimalInput, isInRange } from '../utils/numberUtils'
+import {
+  parseNumber,
+  formatNumber,
+  isValidDecimal,
+  sanitizeDecimalInput,
+  isInRange,
+} from '../utils/numberUtils'
 
 describe('Decimal-Safe Number Handling', () => {
   describe('parseNumber', () => {
@@ -46,7 +52,7 @@ describe('Decimal-Safe Number Handling', () => {
       expect(formatNumber(0.9)).toBe('0.9')
       expect(formatNumber(1.0)).toBe('1')
       expect(formatNumber(2.4)).toBe('2.4')
-      expect(formatNumber(5.00)).toBe('5')
+      expect(formatNumber(5.0)).toBe('5')
     })
 
     it('should handle undefined and NaN', () => {
@@ -121,7 +127,7 @@ describe('Decimal-Safe Number Handling', () => {
       const input = '0.9'
       const parsed = parseNumber(input)
       expect(parsed).toBe(0.9)
-      
+
       // Should format back to 0.9
       const formatted = formatNumber(parsed)
       expect(formatted).toBe('0.9')
@@ -129,7 +135,7 @@ describe('Decimal-Safe Number Handling', () => {
 
     it('should handle setback values correctly', () => {
       const setbacks = ['0.9', '1.5', '5.0', '12.0']
-      setbacks.forEach(setback => {
+      setbacks.forEach((setback) => {
         const parsed = parseNumber(setback)
         expect(parsed).toBe(parseFloat(setback))
         expect(formatNumber(parsed)).toBe(setback.replace(/\.0$/, ''))
@@ -140,7 +146,7 @@ describe('Decimal-Safe Number Handling', () => {
       const length = parseNumber('3.0')
       const width = parseNumber('2.4')
       const area = (length || 0) * (width || 0)
-      
+
       expect(length).toBe(3.0)
       expect(width).toBe(2.4)
       expect(area).toBeCloseTo(7.2, 1) // Use toBeCloseTo for floating point comparison
@@ -152,7 +158,7 @@ describe('Decimal-Safe Number Handling', () => {
       const partial = '0.'
       const sanitized = sanitizeDecimalInput(partial)
       expect(sanitized).toBe('0.')
-      
+
       // But parseNumber should reject it as incomplete
       const parsed = parseNumber(partial)
       expect(parsed).toBeUndefined()

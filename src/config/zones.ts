@@ -1,4 +1,4 @@
-export type ZoneOption = { value: string; label: string };
+export type ZoneOption = { value: string; label: string }
 
 export const ZONES: ZoneOption[] = [
   { value: '', label: 'Select a zone' },
@@ -114,10 +114,10 @@ export const ZONES: ZoneOption[] = [
   { value: 'UL', label: 'UL - Unzoned Land' },
 
   { value: 'DM', label: 'DM - Deferred Matter' },
-];
+]
 
 export function isValidZoneCode(zoneCode: string): boolean {
-  return ZONES.some(zone => zone.value === zoneCode && zone.value !== '');
+  return ZONES.some((zone) => zone.value === zoneCode && zone.value !== '')
 }
 
-export default ZONES;
+export default ZONES

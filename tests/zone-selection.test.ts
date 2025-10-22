@@ -12,10 +12,10 @@ describe('Zone Selection Tests', () => {
           lot_size_m2: 500,
           frontage_m: 15,
           corner_lot_bool: false,
-          easement_bool: false
-        }
+          easement_bool: false,
+        },
       }
-      
+
       const result = validateStep('property', data)
       expect(result.valid).toBe(true)
       expect(result.errors).toHaveLength(0)
@@ -29,10 +29,10 @@ describe('Zone Selection Tests', () => {
           lot_size_m2: 500,
           frontage_m: 15,
           corner_lot_bool: false,
-          easement_bool: false
-        }
+          easement_bool: false,
+        },
       }
-      
+
       const result = validateStep('property', data)
       expect(result.valid).toBe(false)
       expect(result.errors).toHaveLength(1)
@@ -47,10 +47,10 @@ describe('Zone Selection Tests', () => {
           lot_size_m2: 500,
           frontage_m: 15,
           corner_lot_bool: false,
-          easement_bool: false
-        }
+          easement_bool: false,
+        },
       }
-      
+
       const result = validateStep('property', data)
       expect(result.valid).toBe(false)
       expect(result.errors).toHaveLength(1)
@@ -67,10 +67,10 @@ describe('Zone Selection Tests', () => {
           lot_size_m2: 500,
           frontage_m: 15,
           corner_lot_bool: false,
-          easement_bool: false
-        }
+          easement_bool: false,
+        },
       }
-      
+
       const result = validateStep('property', data)
       expect(result.valid).toBe(false)
     })
@@ -83,10 +83,10 @@ describe('Zone Selection Tests', () => {
           lot_size_m2: 500,
           frontage_m: 15,
           corner_lot_bool: false,
-          easement_bool: false
-        }
+          easement_bool: false,
+        },
       }
-      
+
       const result = validateStep('property', data)
       expect(result.valid).toBe(true)
     })
@@ -95,11 +95,11 @@ describe('Zone Selection Tests', () => {
   describe('zone_configuration', () => {
     it('should have correct zone options', () => {
       expect(ZONES).toHaveLength(3)
-      expect(ZONES.map(z => z.value)).toEqual(['R1', 'R2', 'R3'])
-      expect(ZONES.map(z => z.label)).toEqual([
+      expect(ZONES.map((z) => z.value)).toEqual(['R1', 'R2', 'R3'])
+      expect(ZONES.map((z) => z.label)).toEqual([
         'R1 — General Residential',
         'R2 — Low Density Residential',
-        'R3 — Medium Density Residential'
+        'R3 — Medium Density Residential',
       ])
     })
 
@@ -118,8 +118,8 @@ describe('Zone Selection Tests', () => {
       // This test verifies that the threshold system can handle zone changes
       // The actual threshold values are tested in the thresholds config
       const validZones = ['R1', 'R2', 'R3']
-      
-      validZones.forEach(zone => {
+
+      validZones.forEach((zone) => {
         expect(isValidZoneCode(zone)).toBe(true)
       })
     })

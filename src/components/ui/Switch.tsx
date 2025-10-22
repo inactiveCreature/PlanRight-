@@ -19,27 +19,27 @@ export const Switch: React.FC<SwitchProps> = ({
   id,
   name,
   className = '',
-  ariaLabel
+  ariaLabel,
 }) => {
   const sizeConfig = {
     sm: {
       track: 'w-9 h-5',
       thumb: 'w-4 h-4',
       translate: checked ? 'translate-x-4' : 'translate-x-0',
-      padding: 'p-2'
+      padding: 'p-2',
     },
     md: {
       track: 'w-11 h-6',
       thumb: 'w-5 h-5',
       translate: checked ? 'translate-x-5' : 'translate-x-0',
-      padding: 'p-2'
+      padding: 'p-2',
     },
     lg: {
       track: 'w-14 h-7',
       thumb: 'w-6 h-6',
       translate: checked ? 'translate-x-6' : 'translate-x-0',
-      padding: 'p-2'
-    }
+      padding: 'p-2',
+    },
   }
 
   const config = sizeConfig[size]
@@ -77,14 +77,8 @@ export const Switch: React.FC<SwitchProps> = ({
         rounded-full
         transition-colors duration-200
         focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600
-        ${checked 
-          ? 'bg-blue-600 hover:bg-blue-700' 
-          : 'bg-neutral-300 hover:bg-neutral-400'
-        }
-        ${disabled 
-          ? 'opacity-60 cursor-not-allowed' 
-          : 'cursor-pointer'
-        }
+        ${checked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-neutral-300 hover:bg-neutral-400'}
+        ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
       `}
     >

@@ -5,20 +5,20 @@
 
 export async function mockAssistantAPI(page: any) {
   // Mock the chat API endpoint to prevent hanging streams
-  await page.route('**/api/chat', route => {
+  await page.route('**/api/chat', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ model: 'mock' })
+      body: JSON.stringify({ model: 'mock' }),
     })
   })
 
   // Mock the health check endpoint
-  await page.route('**/api/health', route => {
+  await page.route('**/api/health', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ status: 'ok', model: 'mock' })
+      body: JSON.stringify({ status: 'ok', model: 'mock' }),
     })
   })
 }
@@ -35,11 +35,11 @@ export function addAssistantTimeoutToChatService() {
     if (typeof input === 'string' && input.includes('/api/chat')) {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 8000)
-      
+
       try {
         const response = await originalFetch(input, {
           ...init,
-          signal: controller.signal
+          signal: controller.signal,
         })
         clearTimeout(timeout)
         return response

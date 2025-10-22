@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { assess, isProposalReady, getProposalValidationErrors } from '../assessment/assess'
 import { usePlanRightStore } from '../store'
-import type { Proposal } from '../types'
 
 describe('Unified Assessment Pipeline', () => {
   beforeEach(() => {
@@ -9,12 +8,33 @@ describe('Unified Assessment Pipeline', () => {
     usePlanRightStore.setState({
       role: 'Resident',
       proposal: {
-        property: { id: '', lot_size_m2: '', zone_text: '', frontage_m: '', corner_lot_bool: false, easement_bool: false },
+        property: {
+          id: '',
+          lot_size_m2: '',
+          zone_text: '',
+          frontage_m: '',
+          corner_lot_bool: false,
+          easement_bool: false,
+        },
         structure: { type: 'shed' },
         dimensions: { length_m: '', width_m: '', height_m: '', area_m2: '' },
-        location: { setback_front_m: '', setback_side_m: '', setback_rear_m: '', behind_building_line_bool: false },
-        siting: { on_easement_bool: false, over_sewer_bool: false, attached_to_dwelling_bool: false },
-        context: { heritage_item_bool: false, conservation_area_bool: false, flood_prone_bool: false, bushfire_bool: false },
+        location: {
+          setback_front_m: '',
+          setback_side_m: '',
+          setback_rear_m: '',
+          behind_building_line_bool: false,
+        },
+        siting: {
+          on_easement_bool: false,
+          over_sewer_bool: false,
+          attached_to_dwelling_bool: false,
+        },
+        context: {
+          heritage_item_bool: false,
+          conservation_area_bool: false,
+          flood_prone_bool: false,
+          bushfire_bool: false,
+        },
       },
       lastAssessment: undefined,
     })
@@ -56,7 +76,7 @@ describe('Unified Assessment Pipeline', () => {
 
     // First assessment (simulating Review button)
     const result1 = assess()
-    
+
     // Second assessment (simulating chat "run rules")
     const result2 = assess()
 
@@ -89,7 +109,7 @@ describe('Unified Assessment Pipeline', () => {
   it('should validate non-negative numbers correctly', () => {
     // Test negative numbers should fail validation
     usePlanRightStore.getState().setField('property.lot_size_m2', '-100')
-    
+
     const errors = getProposalValidationErrors()
     expect(errors['property.lot_size_m2']).toContain('non-negative')
   })

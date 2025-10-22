@@ -15,15 +15,9 @@ export default function PageHeader({ title, subtitle, children }: PageHeaderProp
     <div className="flex items-start justify-between mb-8">
       <div className="flex-1">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">{title}</h1>
-        {subtitle && (
-          <p className="text-sm text-slate-600">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-sm text-slate-600">{subtitle}</p>}
       </div>
-      {children && (
-        <div className="ml-6 flex-shrink-0">
-          {children}
-        </div>
-      )}
+      {children && <div className="ml-6 flex-shrink-0">{children}</div>}
     </div>
   )
 }

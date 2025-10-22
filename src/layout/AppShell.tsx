@@ -26,17 +26,23 @@ export default function AppShell({ children, role }: AppShellProps) {
           <div className="flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div>
-              <div className="font-bold text-xl text-slate-900">PlanRight Pro</div>
-              <div className="text-sm text-slate-500">Exempt Development Assessment — Sheds • Patios • Carports</div>
+              <div className="font-bold text-xl text-slate-900">PlanRight</div>
+              <div className="text-sm text-slate-500">
+                Exempt Development Assessment — Sheds • Patios • Carports
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {role && <Badge kind="info">Role: {role}</Badge>}
-            
+
             {/* Compact mode buttons */}
             <div className="lg:hidden flex items-center gap-2">
               {/* Steps button */}
@@ -45,11 +51,15 @@ export default function AppShell({ children, role }: AppShellProps) {
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-600 text-white text-sm hover:bg-slate-700 transition-colors"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Steps
               </button>
-              
+
               {/* Assistant button */}
               <button
                 onClick={() => setIsMobileDrawerOpen(true)}
@@ -61,7 +71,7 @@ export default function AppShell({ children, role }: AppShellProps) {
                 </svg>
                 Assistant
               </button>
-              
+
               {/* Fullscreen toggle */}
               <FullscreenToggle />
             </div>
@@ -74,7 +84,7 @@ export default function AppShell({ children, role }: AppShellProps) {
         {/* Desktop layout: Sidebar | Main | Assistant */}
         <div className="hidden lg:grid grid-cols-[280px_minmax(0,1fr)_360px] gap-6 max-w-screen-xl mx-auto">
           {children}
-          
+
           {/* Desktop Assistant Panel */}
           <aside className="sticky top-[80px] w-[360px] max-w-[360px] min-w-0">
             <AssistantPanel role={role || 'User'} />
@@ -82,20 +92,18 @@ export default function AppShell({ children, role }: AppShellProps) {
         </div>
 
         {/* Compact layout: single column */}
-        <div className="lg:hidden block max-w-none w-full">
-          {children}
-        </div>
+        <div className="lg:hidden block max-w-none w-full">{children}</div>
       </main>
 
       {/* Sidebar Drawer (compact) */}
       {isSidebarDrawerOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50 lg:hidden"
             onClick={() => setIsSidebarDrawerOpen(false)}
           />
-          
+
           {/* Drawer */}
           <div className="fixed inset-y-0 left-0 w-[280px] bg-white shadow-2xl z-50 lg:hidden">
             <div className="h-full flex flex-col">
@@ -107,11 +115,15 @@ export default function AppShell({ children, role }: AppShellProps) {
                   className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </div>
-              
+
               {/* Drawer Content - This will be populated by the wizard */}
               <div className="flex-1 min-h-0 p-4">
                 {/* Placeholder for stepper content */}
@@ -126,11 +138,11 @@ export default function AppShell({ children, role }: AppShellProps) {
       {isMobileDrawerOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50 lg:hidden"
             onClick={() => setIsMobileDrawerOpen(false)}
           />
-          
+
           {/* Drawer */}
           <div className="fixed inset-x-0 bottom-0 h-[60vh] rounded-t-2xl bg-white shadow-2xl z-50 lg:hidden">
             <div className="h-full flex flex-col">
@@ -142,14 +154,21 @@ export default function AppShell({ children, role }: AppShellProps) {
                   className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </div>
-              
+
               {/* Drawer Content */}
               <div className="flex-1 min-h-0">
-                <AssistantPanel role={role || 'User'} className="h-full max-h-none rounded-none border-none shadow-none" />
+                <AssistantPanel
+                  role={role || 'User'}
+                  className="h-full max-h-none rounded-none border-none shadow-none"
+                />
               </div>
             </div>
           </div>
@@ -158,13 +177,15 @@ export default function AppShell({ children, role }: AppShellProps) {
 
       {/* Prevent body scroll when drawers are open */}
       {(isMobileDrawerOpen || isSidebarDrawerOpen) && (
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
             body {
               overflow: hidden;
             }
-          `
-        }} />
+          `,
+          }}
+        />
       )}
     </div>
   )

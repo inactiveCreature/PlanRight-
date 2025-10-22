@@ -12,31 +12,31 @@ export function parseNumber(input: string): number | undefined {
   if (!input || input.trim() === '') {
     return undefined
   }
-  
+
   // Remove any whitespace
   const trimmed = input.trim()
-  
+
   // Handle empty string after trimming
   if (trimmed === '') {
     return undefined
   }
-  
+
   // Parse as float to preserve decimals
   const parsed = parseFloat(trimmed)
-  
+
   // Check if parsing resulted in NaN
   if (isNaN(parsed)) {
     return undefined
   }
-  
+
   // Check if the original string represents a valid number
   // This prevents cases like "0.9" becoming "9" or "1.2.3" being accepted
   const isValidNumberString = /^-?\d*\.?\d+$/.test(trimmed)
-  
+
   if (!isValidNumberString) {
     return undefined
   }
-  
+
   return parsed
 }
 
@@ -50,10 +50,10 @@ export function formatNumber(value: number | undefined, decimals: number = 1): s
   if (value === undefined || isNaN(value)) {
     return ''
   }
-  
+
   // Use toFixed to preserve decimal places, then remove trailing zeros
   const formatted = value.toFixed(decimals)
-  
+
   // Remove trailing zeros and decimal point if not needed
   return formatted.replace(/\.?0+$/, '')
 }
@@ -67,16 +67,16 @@ export function isValidDecimal(input: string): boolean {
   if (!input || input.trim() === '') {
     return true // Empty is valid (will be handled by required validation)
   }
-  
+
   const trimmed = input.trim()
-  
+
   // Must match decimal number pattern
   const decimalPattern = /^-?\d*\.?\d+$/
-  
+
   if (!decimalPattern.test(trimmed)) {
     return false
   }
-  
+
   // Must be parseable as a number
   const parsed = parseFloat(trimmed)
   return !isNaN(parsed)
@@ -103,14 +103,14 @@ export function isInRange(value: number | undefined, min?: number, max?: number)
   if (value === undefined || isNaN(value)) {
     return false
   }
-  
+
   if (min !== undefined && value < min) {
     return false
   }
-  
+
   if (max !== undefined && value > max) {
     return false
   }
-  
+
   return true
 }

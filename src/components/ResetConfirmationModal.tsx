@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface ResetConfirmationModalProps {
   isOpen: boolean
@@ -6,10 +6,10 @@ interface ResetConfirmationModalProps {
   onConfirm: (keepRole: boolean, keepChat: boolean) => void
 }
 
-export default function ResetConfirmationModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm 
+export default function ResetConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
 }: ResetConfirmationModalProps) {
   const [keepRole, setKeepRole] = useState(true)
   const [keepChat, setKeepChat] = useState(true)
@@ -78,7 +78,7 @@ export default function ResetConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div 
+      <div
         ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
         role="dialog"
@@ -90,7 +90,11 @@ export default function ResetConfirmationModal({
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
               <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div>
@@ -107,21 +111,32 @@ export default function ResetConfirmationModal({
         <div className="p-6">
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg
+                className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
               <div>
                 <p className="text-sm font-medium text-amber-800">Warning</p>
                 <p className="text-sm text-amber-700 mt-1">
-                  This will clear all form fields and results. You can undo this action for 5 seconds after confirming.
+                  This will clear all form fields and results. You can undo this action for 5
+                  seconds after confirming.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="space-y-4 mb-8">
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">What would you like to keep?</h3>
-            
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              What would you like to keep?
+            </h3>
+
             <label className="flex items-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
               <input
                 type="checkbox"
@@ -131,10 +146,12 @@ export default function ResetConfirmationModal({
               />
               <div className="ml-3">
                 <span className="text-sm font-medium text-slate-700">Keep my role</span>
-                <p className="text-xs text-slate-500 mt-1">Preserve your current user role selection</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Preserve your current user role selection
+                </p>
               </div>
             </label>
-            
+
             <label className="flex items-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
               <input
                 type="checkbox"
@@ -144,7 +161,9 @@ export default function ResetConfirmationModal({
               />
               <div className="ml-3">
                 <span className="text-sm font-medium text-slate-700">Keep chat history</span>
-                <p className="text-xs text-slate-500 mt-1">Preserve your conversation with the assistant</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Preserve your conversation with the assistant
+                </p>
               </div>
             </label>
           </div>

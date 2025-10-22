@@ -2,11 +2,14 @@ import { z } from 'zod'
 
 // Base schema for non-negative numbers (can be string or number)
 const nonNegativeNumber = z.union([
-  z.string().refine((val) => {
-    const num = Number(val)
-    return !isNaN(num) && num >= 0
-  }, { message: "Must be a non-negative number" }),
-  z.number().min(0, "Must be non-negative")
+  z.string().refine(
+    (val) => {
+      const num = Number(val)
+      return !isNaN(num) && num >= 0
+    },
+    { message: 'Must be a non-negative number' }
+  ),
+  z.number().min(0, 'Must be non-negative'),
 ])
 
 // Structure type schema
@@ -16,7 +19,7 @@ const structureTypeSchema = z.enum(['shed', 'patio', 'carport'])
 const propertySchema = z.object({
   id: z.string(),
   lot_size_m2: nonNegativeNumber,
-  zone_text: z.string().min(1, "Zone is required"),
+  zone_text: z.string().min(1, 'Zone is required'),
   frontage_m: nonNegativeNumber,
   corner_lot_bool: z.boolean(),
   easement_bool: z.boolean(),
@@ -78,7 +81,7 @@ export function validateProposal(proposal: unknown): { success: boolean; errors:
     return { success: true, errors: [] }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => {
+      const errors = error.errors.map((err) => {
         const path = err.path.join('.')
         return `${path}: ${err.message}`
       })
@@ -87,4 +90,3 @@ export function validateProposal(proposal: unknown): { success: boolean; errors:
     return { success: false, errors: ['Unknown validation error'] }
   }
 }
-

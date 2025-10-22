@@ -9,38 +9,38 @@ import type { RuleResult } from '../types'
  * 2. Validates proposal using Zod schema
  * 3. Calls run_rules_assessment if valid
  * 4. Writes result to store
- * 
+ *
  * Used by both Review button and chat "Run rules" action
  */
 export function assess(): RuleResult {
   const store = usePlanRightStore.getState()
   const proposal = store.proposal
-  
+
   // Step 1: Validate proposal using Zod schema
   const validation = validateProposal(proposal)
-  
+
   if (!validation.success) {
     // Create a "Cannot assess" result with validation errors
     const result: RuleResult = {
       decision: 'Cannot assess',
       checks: [],
-      errors: validation.errors.map(error => ({
+      errors: validation.errors.map((error) => ({
         field: error.split(':')[0] || 'unknown',
-        message: error.split(':').slice(1).join(':').trim() || error
-      }))
+        message: error.split(':').slice(1).join(':').trim() || error,
+      })),
     }
-    
+
     // Write result to store
     store.setAssessment(result)
     return result
   }
-  
+
   // Step 2: Call rules engine with validated proposal
   const result = run_rules_assessment(proposal)
-  
+
   // Step 3: Write result to store
   store.setAssessment(result)
-  
+
   return result
 }
 
@@ -51,7 +51,7 @@ export function assess(): RuleResult {
 export function isProposalReady(): boolean {
   const store = usePlanRightStore.getState()
   const proposal = store.proposal
-  
+
   const validation = validateProposal(proposal)
   return validation.success
 }
@@ -63,21 +63,21 @@ export function isProposalReady(): boolean {
 export function getProposalValidationErrors(): Record<string, string> {
   const store = usePlanRightStore.getState()
   const proposal = store.proposal
-  
+
   const validation = validateProposal(proposal)
-  
+
   if (validation.success) {
     return {}
   }
-  
+
   // Convert Zod errors to field-specific format
   const fieldErrors: Record<string, string> = {}
-  validation.errors.forEach(error => {
+  validation.errors.forEach((error) => {
     const [field, ...messageParts] = error.split(':')
     const message = messageParts.join(':').trim()
     fieldErrors[field] = message
   })
-  
+
   return fieldErrors
 }
 
@@ -88,4 +88,3 @@ export function getLastAssessment(): RuleResult | undefined {
   const store = usePlanRightStore.getState()
   return store.lastAssessment
 }
-

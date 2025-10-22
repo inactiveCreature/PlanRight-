@@ -22,17 +22,10 @@ export const SwitchField: React.FC<SwitchFieldProps> = ({
     <div className="grid grid-cols-12 items-center gap-3">
       {/* Label and Description */}
       <div className="col-span-7 md:col-span-9">
-        <label 
-          htmlFor={fieldId}
-          className="block text-sm font-medium text-slate-700"
-        >
+        <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
           {label}
         </label>
-        {description && (
-          <p className="mt-1 text-sm text-slate-500">
-            {description}
-          </p>
-        )}
+        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
         {invalid && errorMessage && (
           <p className="mt-1 text-sm text-red-600" role="alert">
             {errorMessage}

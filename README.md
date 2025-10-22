@@ -1,15 +1,17 @@
-x# PlanRight Pro — Exempt Development Wizard
+# PlanRight — Exempt Development Wizard
 
-Modular, commented React + Vite project with a deterministic rules engine. 
+Modular, commented React + Vite project with a deterministic rules engine.
 Left = stepper, center = form, right = AI chat panel. Chat action chips write straight into the form.
 
 ## Quick start
+
 1. **Install**: `npm i`
 2. **Run dev**: `npm run dev` then open the URL it prints.
-3. **Run tests**: `npm test` (Vitest). 
+3. **Run tests**: `npm test` (Vitest).
 4. **Build**: `npm run build` then `npm run preview`.
 
 ## Structure
+
 ```
 src/
   App.tsx                 # App shell
@@ -42,6 +44,7 @@ tests_python/
 ```
 
 ## Notes
+
 - **No duplicate components**: `ChatBubble` is declared once and used everywhere, which fixes the previous `Identifier 'ChatBubble' has already been declared` error.
 - Thresholds in `rules/engine.ts` are clearly marked as placeholders pending exact SEPP clause values.
 - Every major file has comments explaining the intent. You’re welcome.

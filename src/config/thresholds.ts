@@ -87,16 +87,36 @@ export const THRESHOLDS: ThresholdsConfig = {
  */
 export function normalizeZone(zoneText: string): string {
   const normalized = zoneText.trim().toUpperCase()
-  
+
   // Map common variations to canonical zones
   const zoneMap: Record<string, string> = {
-    'R1': 'R1', 'R2': 'R2', 'R3': 'R3', 'R4': 'R4', 'R5': 'R5',
-    'RU1': 'RU1', 'RU2': 'RU2', 'RU3': 'RU3', 'RU4': 'RU4', 'RU5': 'RU5', 'RU6': 'RU6',
-    'RESIDENTIAL': 'R2', 'RURAL': 'RU1', 'FARMING': 'RU1',
-    'ZONE R1': 'R1', 'ZONE R2': 'R2', 'ZONE R3': 'R3', 'ZONE R4': 'R4', 'ZONE R5': 'R5',
-    'ZONE RU1': 'RU1', 'ZONE RU2': 'RU2', 'ZONE RU3': 'RU3', 'ZONE RU4': 'RU4', 'ZONE RU5': 'RU5', 'ZONE RU6': 'RU6'
+    R1: 'R1',
+    R2: 'R2',
+    R3: 'R3',
+    R4: 'R4',
+    R5: 'R5',
+    RU1: 'RU1',
+    RU2: 'RU2',
+    RU3: 'RU3',
+    RU4: 'RU4',
+    RU5: 'RU5',
+    RU6: 'RU6',
+    RESIDENTIAL: 'R2',
+    RURAL: 'RU1',
+    FARMING: 'RU1',
+    'ZONE R1': 'R1',
+    'ZONE R2': 'R2',
+    'ZONE R3': 'R3',
+    'ZONE R4': 'R4',
+    'ZONE R5': 'R5',
+    'ZONE RU1': 'RU1',
+    'ZONE RU2': 'RU2',
+    'ZONE RU3': 'RU3',
+    'ZONE RU4': 'RU4',
+    'ZONE RU5': 'RU5',
+    'ZONE RU6': 'RU6',
   }
-  
+
   return zoneMap[normalized] || normalized
 }
 
@@ -113,27 +133,31 @@ export function isRuralZone(zoneText: string): boolean {
  * For carports, adjusts area limits based on lot size.
  * Falls back to R2 defaults if zone not found.
  */
-export function getThresholds(structureType: string, zoneText: string, lotSizeM2?: number): ZoneThresholds {
+export function getThresholds(
+  structureType: string,
+  zoneText: string,
+  lotSizeM2?: number
+): ZoneThresholds {
   const structureThresholds = THRESHOLDS[structureType as keyof ThresholdsConfig]
   if (!structureThresholds) {
     // Fallback to shed defaults if structure type not found
     return THRESHOLDS.shed.R2
   }
-  
+
   const normalizedZone = normalizeZone(zoneText)
   const zoneThresholds = structureThresholds[normalizedZone as keyof StructureThresholds]
   if (!zoneThresholds) {
     // Fallback to R2 defaults if zone not found
     return structureThresholds.R2
   }
-  
+
   // For carports, adjust area limits based on lot size
   if (structureType === 'carport' && lotSizeM2 !== undefined) {
     const lotSize = Number(lotSizeM2)
     const isRural = isRuralZone(zoneText)
-    
+
     let adjustedAreaMax = zoneThresholds.areaMax
-    
+
     if (isRural) {
       // Rural zones: ≤50m² if lot >300m², ≤20m² if ≤300m²
       adjustedAreaMax = lotSize > 300 ? 50 : 20
@@ -141,13 +165,12 @@ export function getThresholds(structureType: string, zoneText: string, lotSizeM2
       // Residential zones: ≤25m² if lot >300m², ≤20m² if ≤300m²
       adjustedAreaMax = lotSize > 300 ? 25 : 20
     }
-    
+
     return {
       ...zoneThresholds,
-      areaMax: adjustedAreaMax
+      areaMax: adjustedAreaMax,
     }
   }
-  
+
   return zoneThresholds
 }
-
