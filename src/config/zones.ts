@@ -116,4 +116,8 @@ export const ZONES: ZoneOption[] = [
   { value: 'DM', label: 'DM - Deferred Matter' },
 ];
 
+export function isValidZoneCode(zoneCode: string): boolean {
+  return ZONES.some(zone => zone.value === zoneCode && zone.value !== '');
+}
+
 export default ZONES;

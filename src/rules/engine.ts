@@ -3,9 +3,10 @@
  * Each rule maps to specific clauses with exact thresholds from the legislation.
  */
 import type { Proposal, RuleResult, RuleCheck } from '../types'
-import { getThresholds } from '../config/thresholds'
+import { getThresholds, normalizeZone } from '../config/thresholds'
 
-// SEPP Part 2 Subdivision thresholds (based on NSW legislation)
+// SEPP Part 2 Subdivision thresholds (based on NSW legislation) - kept for reference
+/*
 const SEPP_THRESHOLDS = {
   // Subdivision 6 - Patios
   patio: {
@@ -44,6 +45,7 @@ const SEPP_THRESHOLDS = {
     attachment_allowed: true, // Clause 2.10(1)(f)
   }
 }
+*/
 
 // Rule definitions with clause references - unbundled checks with killer semantics
 const RULE_DEFINITIONS = {
@@ -73,6 +75,20 @@ const RULE_DEFINITIONS = {
     killer: true,
     check: (p: Proposal) => !p.context.heritage_item_bool && !p.context.conservation_area_bool 
   },
+  'G-EASEMENT-1': { 
+    clause_ref: '2.6(1)(e)/2.9(1)(e)/2.10(1)(e)', 
+    description: '≥1m clearance from registered easements', 
+    killer: true,
+    check: (p: Proposal) => {
+      // If easement exists, structure must be ≥1m clear
+      if (p.property.easement_bool) {
+        const sideSetback = Number(p.location.setback_side_m)
+        const rearSetback = Number(p.location.setback_rear_m)
+        return sideSetback >= 1.0 && rearSetback >= 1.0
+      }
+      return true
+    }
+  },
   
   // Structure-specific checks
   'S-BBL-1': { 
@@ -86,7 +102,7 @@ const RULE_DEFINITIONS = {
     description: 'Front setback ≥ min when BBL=false', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
     }
   },
@@ -101,7 +117,7 @@ const RULE_DEFINITIONS = {
     description: 'Front setback ≥ min when BBL=false', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
     }
   },
@@ -116,7 +132,7 @@ const RULE_DEFINITIONS = {
     description: 'Front setback ≥ min when BBL=false', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return p.location.behind_building_line_bool || Number(p.location.setback_front_m) >= thresholds.frontMin
     }
   },
@@ -127,7 +143,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum height 3.0m', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.height_m) <= thresholds.heightMax
     }
   },
@@ -136,7 +152,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum area 20m²', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
     }
   },
@@ -145,7 +161,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m side setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_side_m) >= thresholds.sideMin
     }
   },
@@ -154,7 +170,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m rear setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
     }
   },
@@ -182,6 +198,29 @@ const RULE_DEFINITIONS = {
     killer: false,
     check: (p: Proposal) => !p.context.bushfire_bool 
   },
+  'S-SHIPPING-1': { 
+    clause_ref: '2.9(1)(g)', 
+    description: 'Not a shipping container', 
+    killer: true,
+    check: (_p: Proposal) => {
+      // Check if structure type indicates shipping container
+      // This would need to be added to the proposal schema
+      return true // Placeholder - need to add shipping_container_bool to schema
+    }
+  },
+  'S-BUSHFIRE-NC-1': { 
+    clause_ref: '2.9(3)', 
+    description: 'Non-combustible if bushfire and within 5m of dwelling', 
+    killer: false,
+    check: (_p: Proposal) => {
+      if (_p.context.bushfire_bool) {
+        // Check if within 5m of dwelling - this would need distance field
+        // For now, assume non-combustible if bushfire prone
+        return true // Placeholder - need to add non_combustible_bool to schema
+      }
+      return true
+    }
+  },
   
   // Patio-specific rules
   'P-HEIGHT-1': { 
@@ -189,7 +228,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum height 3.0m', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.height_m) <= thresholds.heightMax
     }
   },
@@ -198,7 +237,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum area 20m²', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
     }
   },
@@ -207,7 +246,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m side setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_side_m) >= thresholds.sideMin
     }
   },
@@ -216,7 +255,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m rear setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
     }
   },
@@ -245,7 +284,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum height 3.0m', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.height_m) <= thresholds.heightMax
     }
   },
@@ -254,7 +293,7 @@ const RULE_DEFINITIONS = {
     description: 'Maximum area 30m²', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.dimensions.area_m2) <= thresholds.areaMax
     }
   },
@@ -263,7 +302,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m side setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_side_m) >= thresholds.sideMin
     }
   },
@@ -272,7 +311,7 @@ const RULE_DEFINITIONS = {
     description: 'Minimum 0.9m rear setback', 
     killer: false,
     check: (p: Proposal) => {
-      const thresholds = getThresholds(p.structure.type, p.property.zone_text)
+      const thresholds = getThresholds(p.structure.type, p.property.zone_text, Number(p.property.lot_size_m2))
       return Number(p.location.setback_rear_m) >= thresholds.rearMin
     }
   },
@@ -293,6 +332,27 @@ const RULE_DEFINITIONS = {
     description: 'Not bushfire prone', 
     killer: false,
     check: (p: Proposal) => !p.context.bushfire_bool 
+  },
+  'C-ROOF-CLEARANCE-1': { 
+    clause_ref: '2.10(1)(d)', 
+    description: 'Roof ≥500mm from boundary', 
+    killer: false,
+    check: (p: Proposal) => {
+      // This would need roof_to_boundary_m field in proposal schema
+      // For now, assume compliance if side/rear setbacks are adequate
+      const sideSetback = Number(p.location.setback_side_m)
+      const rearSetback = Number(p.location.setback_rear_m)
+      return sideSetback >= 0.5 && rearSetback >= 0.5
+    }
+  },
+  'C-CLASS-7A-1': { 
+    clause_ref: '2.10(1)(f)', 
+    description: 'Not Class 7a building', 
+    killer: true,
+    check: (_p: Proposal) => {
+      // This would need building_class field in proposal schema
+      return true // Placeholder - need to add building_class to schema
+    }
   },
 }
 
@@ -324,12 +384,21 @@ export function run_rules_assessment(p: Proposal): RuleResult {
   const frontSetback = Number(p.location.setback_front_m)
   const sideSetback = Number(p.location.setback_side_m)
   const rearSetback = Number(p.location.setback_rear_m)
+  const lotSize = Number(p.property.lot_size_m2)
 
   if (height <= 0) errors.push({ field: 'dimensions.height_m', message: 'Height must be greater than 0' })
   if (area <= 0) errors.push({ field: 'dimensions.area_m2', message: 'Area must be greater than 0' })
   if (frontSetback < 0) errors.push({ field: 'location.setback_front_m', message: 'Front setback cannot be negative' })
   if (sideSetback < 0) errors.push({ field: 'location.setback_side_m', message: 'Side setback cannot be negative' })
   if (rearSetback < 0) errors.push({ field: 'location.setback_rear_m', message: 'Rear setback cannot be negative' })
+  if (lotSize <= 0) errors.push({ field: 'property.lot_size_m2', message: 'Lot size must be greater than 0' })
+
+  // Validate zone
+  const normalizedZone = normalizeZone(p.property.zone_text)
+  const validZones = ['R1', 'R2', 'R3', 'R4', 'R5', 'RU1', 'RU2', 'RU3', 'RU4', 'RU5', 'RU6']
+  if (!validZones.includes(normalizedZone)) {
+    errors.push({ field: 'property.zone_text', message: `Unknown zone: ${p.property.zone_text}. Must be one of: ${validZones.join(', ')}` })
+  }
 
   if (errors.length) return { decision: 'Cannot assess', checks, errors }
 
@@ -360,14 +429,14 @@ export function run_rules_assessment(p: Proposal): RuleResult {
   return { decision, checks, errors }
 }
 
-function generateRuleNote(ruleId: string, rule: any, p: Proposal, pass: boolean): string {
+function generateRuleNote(ruleId: string, rule: any, p: Proposal, _pass: boolean): string {
   const structureType = p.structure.type
   const height = Number(p.dimensions.height_m)
   const area = Number(p.dimensions.area_m2)
   const frontSetback = Number(p.location.setback_front_m)
   const sideSetback = Number(p.location.setback_side_m)
   const rearSetback = Number(p.location.setback_rear_m)
-  const thresholds = getThresholds(structureType, p.property.zone_text)
+  const thresholds = getThresholds(structureType, p.property.zone_text, Number(p.property.lot_size_m2))
 
   switch (ruleId) {
     case 'G-AREA-1':
