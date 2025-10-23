@@ -117,7 +117,7 @@ export function generateTextPDF(
       })
       .slice(0, 10) // Top 10 most important checks
     
-    topChecks.forEach((check, index) => {
+         topChecks.forEach((check, _index) => {
       if (yPosition > 280) {
         pdf.addPage()
         yPosition = 20

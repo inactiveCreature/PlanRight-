@@ -12,6 +12,9 @@ import Card from '../../components/Card'
 import ResetMenu from '../../components/ResetMenu'
 import ResetConfirmationModal from '../../components/ResetConfirmationModal'
 import UndoToast from '../../components/UndoToast'
+import { StatusTag } from '../../components/StatusTag'
+import { fmtDims, fmtSqm, fmtMeters, toTitleCase } from '../../utils/format'
+import { getMinSetback } from '../../constants/thresholds'
 import { list_sample_properties } from '../../data/sampleProperties'
 import { assess } from '../../assessment/assess'
 import { usePlanRightStore } from '../../store'
@@ -122,6 +125,141 @@ export default function PlanRightWizard({
 
   const handleDismissUndoToast = () => {
     setShowUndoToast(false)
+  }
+
+
+  // Status tag mappings for Location & Siting
+  const getLocationSitingTags = () => {
+    const { behind_building_line_bool } = proposal.location
+    const { on_easement_bool, over_sewer_bool } = proposal.siting
+
+    return {
+      behind_building_line: behind_building_line_bool === true ? (
+        <StatusTag 
+          state="pass" 
+          text="Behind building line"
+        />
+      ) : behind_building_line_bool === false ? (
+        <StatusTag 
+          state="fail" 
+          text="In front of building line"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      ),
+
+      on_easement: on_easement_bool === true ? (
+        <StatusTag 
+          state="fail" 
+          text="Inside registered easement"
+        />
+      ) : on_easement_bool === false ? (
+        <StatusTag 
+          state="pass" 
+          text="No easement conflict"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      ),
+
+      over_sewer: over_sewer_bool === true ? (
+        <StatusTag 
+          state="warn" 
+          text="Above sewer/service line"
+        />
+      ) : over_sewer_bool === false ? (
+        <StatusTag 
+          state="pass" 
+          text="No sewer line under structure"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      )
+    }
+  }
+
+  // Status tag mappings for Context Flags
+  const getContextFlagsTags = () => {
+    const { heritage_item_bool, conservation_area_bool, flood_prone_bool, bushfire_bool } = proposal.context
+
+    return {
+      heritage_item: heritage_item_bool === true ? (
+        <StatusTag 
+          state="fail" 
+          text="Heritage item"
+        />
+      ) : heritage_item_bool === false ? (
+        <StatusTag 
+          state="neutral" 
+          text="Not heritage-listed"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      ),
+
+      conservation_area: conservation_area_bool === true ? (
+        <StatusTag 
+          state="warn" 
+          text="In conservation area"
+        />
+      ) : conservation_area_bool === false ? (
+        <StatusTag 
+          state="neutral" 
+          text="Outside conservation area"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      ),
+
+      flood_prone: flood_prone_bool === true ? (
+        <StatusTag 
+          state="warn" 
+          text="Flood-prone land"
+        />
+      ) : flood_prone_bool === false ? (
+        <StatusTag 
+          state="neutral" 
+          text="Not flood-prone"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      ),
+
+      bushfire: bushfire_bool === true ? (
+        <StatusTag 
+          state="warn" 
+          text="Bushfire-prone land"
+        />
+      ) : bushfire_bool === false ? (
+        <StatusTag 
+          state="neutral" 
+          text="Not bushfire-prone"
+        />
+      ) : (
+        <StatusTag 
+          state="neutral" 
+          text="Not provided"
+        />
+      )
+    }
   }
 
   // Auto-calc area when length/width change and not manual
@@ -729,128 +867,182 @@ export default function PlanRightWizard({
             </div>
           </PageHeader>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <Card>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <h4 className="text-xl font-bold text-slate-900">Project Summary</h4>
+              <div className="border-b border-slate-200 pb-6 mb-6">
+                <h4 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Project Summary</h4>
+                <p className="text-sm text-slate-600 font-medium">Complete overview of your development proposal</p>
               </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h5 className="font-semibold text-slate-800 mb-3">Structure Details</h5>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-slate-500">Type:</span>{' '}
-                      <span className="font-medium">{proposal.structure.type || '—'}</span>
+              
+              <div className="space-y-6">
+                {/* Structure Details Section */}
+                <div className="bg-slate-50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                    <h5 className="text-xl font-bold text-slate-800 tracking-tight">Structure Details</h5>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Structure Type</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight">{toTitleCase(proposal.structure.type || '—')}</div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Dimensions:</span>{' '}
-                      <span className="font-medium">
-                        L {proposal.dimensions.length_m || '—'}m × W{' '}
-                        {proposal.dimensions.width_m || '—'}m × H{' '}
-                        {proposal.dimensions.height_m || '—'}m
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Dimensions</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight">
+                        {fmtDims(
+                          Number(proposal.dimensions.length_m) || 0,
+                          Number(proposal.dimensions.width_m) || 0,
+                          Number(proposal.dimensions.height_m) || 0
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Area:</span>{' '}
-                      <span className="font-medium">{proposal.dimensions.area_m2 || '—'} m²</span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Area</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight">{fmtSqm(Number(proposal.dimensions.area_m2) || 0)}</div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h5 className="font-semibold text-slate-800 mb-3">Setbacks</h5>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-slate-500">Front:</span>{' '}
-                      <span className="font-medium">
-                        {proposal.location.setback_front_m || '—'} m
-                      </span>
+
+                {/* Setbacks Section */}
+                <div className="bg-slate-50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                    <h5 className="text-xl font-bold text-slate-800 tracking-tight">Setback Requirements</h5>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Front Setback</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight mb-3">
+                        {fmtMeters(Number(proposal.location.setback_front_m) || 0)}
+                      </div>
+                      {(() => {
+                        const minSetback = getMinSetback(proposal.property.zone_text)
+                        const value = Number(proposal.location.setback_front_m) || 0
+                        const isBelowMin = value < minSetback.front
+                        return (
+                          <div className="space-y-2">
+                            <div className="text-xs font-medium text-slate-500">Minimum: {fmtMeters(minSetback.front)}</div>
+                            {isBelowMin && (
+                              <StatusTag 
+                                state="fail" 
+                                text={`Below minimum (${fmtMeters(minSetback.front)})`} 
+                                showPrefix={false} 
+                                className="text-xs" 
+                              />
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
-                    <div>
-                      <span className="text-slate-500">Side:</span>{' '}
-                      <span className="font-medium">
-                        {proposal.location.setback_side_m || '—'} m
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Side Setback</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight mb-3">
+                        {fmtMeters(Number(proposal.location.setback_side_m) || 0)}
+                      </div>
+                      {(() => {
+                        const minSetback = getMinSetback(proposal.property.zone_text)
+                        const value = Number(proposal.location.setback_side_m) || 0
+                        const isBelowMin = value < minSetback.side
+                        return (
+                          <div className="space-y-2">
+                            <div className="text-xs font-medium text-slate-500">Minimum: {fmtMeters(minSetback.side)}</div>
+                            {isBelowMin && (
+                              <StatusTag 
+                                state="fail" 
+                                text={`Below minimum (${fmtMeters(minSetback.side)})`} 
+                                showPrefix={false} 
+                                className="text-xs" 
+                              />
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
-                    <div>
-                      <span className="text-slate-500">Rear:</span>{' '}
-                      <span className="font-medium">
-                        {proposal.location.setback_rear_m || '—'} m
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Rear Setback</div>
+                      <div className="text-lg font-bold text-slate-800 leading-tight mb-3">
+                        {fmtMeters(Number(proposal.location.setback_rear_m) || 0)}
+                      </div>
+                      {(() => {
+                        const minSetback = getMinSetback(proposal.property.zone_text)
+                        const value = Number(proposal.location.setback_rear_m) || 0
+                        const isBelowMin = value < minSetback.rear
+                        return (
+                          <div className="space-y-2">
+                            <div className="text-xs font-medium text-slate-500">Minimum: {fmtMeters(minSetback.rear)}</div>
+                            {isBelowMin && (
+                              <StatusTag 
+                                state="fail" 
+                                text={`Below minimum (${fmtMeters(minSetback.rear)})`} 
+                                showPrefix={false} 
+                                className="text-xs" 
+                              />
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h5 className="font-semibold text-slate-800 mb-3">Location & Siting</h5>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-slate-500">Behind building line:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.location.behind_building_line_bool ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                      >
-                        {String(proposal.location.behind_building_line_bool)}
-                      </span>
+
+                {/* Location & Siting Section */}
+                <div className="bg-slate-50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                    <h5 className="text-xl font-bold text-slate-800 tracking-tight">Location & Siting</h5>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Building Line Position</div>
+                      <div className="min-w-0">
+                        {getLocationSitingTags().behind_building_line}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">On easement:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.siting.on_easement_bool ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.siting.on_easement_bool)}
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Easement Status</div>
+                      <div className="min-w-0">
+                        {getLocationSitingTags().on_easement}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Over sewer:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.siting.over_sewer_bool ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.siting.over_sewer_bool)}
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Sewer Line Position</div>
+                      <div className="min-w-0">
+                        {getLocationSitingTags().over_sewer}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h5 className="font-semibold text-slate-800 mb-3">Context Flags</h5>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-slate-500">Heritage:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.context.heritage_item_bool ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.context.heritage_item_bool)}
-                      </span>
+
+                {/* Context Flags Section */}
+                <div className="bg-slate-50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-8 bg-amber-500 rounded-full"></div>
+                    <h5 className="text-xl font-bold text-slate-800 tracking-tight">Context & Constraints</h5>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Heritage Status</div>
+                      <div className="min-w-0">
+                        {getContextFlagsTags().heritage_item}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Conservation:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.context.conservation_area_bool ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.context.conservation_area_bool)}
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Conservation Area</div>
+                      <div className="min-w-0">
+                        {getContextFlagsTags().conservation_area}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Flood prone:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.context.flood_prone_bool ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.context.flood_prone_bool)}
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Flood Risk</div>
+                      <div className="min-w-0">
+                        {getContextFlagsTags().flood_prone}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-500">Bushfire prone:</span>{' '}
-                      <span
-                        className={`font-medium px-2 py-1 rounded-full text-xs ${proposal.context.bushfire_bool ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
-                      >
-                        {String(proposal.context.bushfire_bool)}
-                      </span>
+                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bushfire Risk</div>
+                      <div className="min-w-0">
+                        {getContextFlagsTags().bushfire}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1026,3 +1218,4 @@ export default function PlanRightWizard({
     </>
   )
 }
+
