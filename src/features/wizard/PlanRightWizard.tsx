@@ -805,8 +805,8 @@ export default function PlanRightWizard({
       return (
         <>
           <PageHeader
-            title="Context flags"
-            subtitle="Some overlays may disqualify exempt status or add special requirements."
+            title="Context & Constraints"
+            subtitle="Environmental and planning overlays that may affect your development proposal."
           >
             <ResetMenu
               currentStep="context"
@@ -814,33 +814,122 @@ export default function PlanRightWizard({
               onResetAll={handleResetAll}
             />
           </PageHeader>
-          <Card>
-            <div className="space-y-4">
-              <SwitchField
-                label="Heritage item?"
-                description="Is the property a heritage item? Heritage items have special protection and may require additional approvals."
-                checked={proposal.context.heritage_item_bool}
-                onChange={(v: boolean) => setField('context.heritage_item_bool', v)}
-              />
-              <SwitchField
-                label="Conservation area?"
-                description="Is the property in a conservation area? Conservation areas have special planning controls that may affect development."
-                checked={proposal.context.conservation_area_bool}
-                onChange={(v: boolean) => setField('context.conservation_area_bool', v)}
-              />
 
-              <SwitchField
-                label="Flood prone?"
-                description="Is the property in a flood prone area? Flood prone areas may have additional requirements for development."
-                checked={proposal.context.flood_prone_bool}
-                onChange={(v: boolean) => setField('context.flood_prone_bool', v)}
-              />
-              <SwitchField
-                label="Bushfire prone?"
-                description="Is the property in a bushfire prone area? Bushfire prone areas have special requirements for development and materials."
-                checked={proposal.context.bushfire_bool}
-                onChange={(v: boolean) => setField('context.bushfire_bool', v)}
-              />
+          {/* Heritage & Conservation Section */}
+          <Card className="mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 tracking-tight">Heritage & Conservation</h3>
+                <p className="text-sm text-slate-600">Special protection areas with additional requirements</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <SwitchField
+                  label="Heritage item?"
+                  description="Is the property a heritage item? Heritage items have special protection and may require additional approvals."
+                  checked={proposal.context.heritage_item_bool}
+                  onChange={(v: boolean) => setField('context.heritage_item_bool', v)}
+                />
+                {proposal.context.heritage_item_bool && (
+                  <div className="ml-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-semibold text-red-800">Development Impact</div>
+                        <div className="text-sm text-red-700">Heritage items typically require development consent and may not be exempt under SEPP Part 2.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <SwitchField
+                  label="Conservation area?"
+                  description="Is the property in a conservation area? Conservation areas have special planning controls that may affect development."
+                  checked={proposal.context.conservation_area_bool}
+                  onChange={(v: boolean) => setField('context.conservation_area_bool', v)}
+                />
+                {proposal.context.conservation_area_bool && (
+                  <div className="ml-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-semibold text-amber-800">Development Impact</div>
+                        <div className="text-sm text-amber-700">Conservation areas may have additional requirements for materials, design, and approval processes.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Environmental Risks Section */}
+          <Card>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 tracking-tight">Environmental Risks</h3>
+                <p className="text-sm text-slate-600">Natural hazards that may require special considerations</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <SwitchField
+                  label="Flood prone?"
+                  description="Is the property in a flood prone area? Flood prone areas may have additional requirements for development."
+                  checked={proposal.context.flood_prone_bool}
+                  onChange={(v: boolean) => setField('context.flood_prone_bool', v)}
+                />
+                {proposal.context.flood_prone_bool && (
+                  <div className="ml-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-semibold text-blue-800">Development Impact</div>
+                        <div className="text-sm text-blue-700">Flood prone areas may require elevated construction, flood-compatible materials, and additional approvals.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <SwitchField
+                  label="Bushfire prone?"
+                  description="Is the property in a bushfire prone area? Bushfire prone areas have special requirements for development and materials."
+                  checked={proposal.context.bushfire_bool}
+                  onChange={(v: boolean) => setField('context.bushfire_bool', v)}
+                />
+                {proposal.context.bushfire_bool && (
+                  <div className="ml-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <div className="text-sm font-semibold text-orange-800">Development Impact</div>
+                        <div className="text-sm text-orange-700">Bushfire prone areas require fire-resistant materials, ember protection, and may need additional approvals.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
         </>
@@ -877,9 +966,9 @@ export default function PlanRightWizard({
               <div className="space-y-6">
                 {/* Structure Details Section */}
                 <div className="bg-slate-50 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                  <div className="mb-6">
                     <h5 className="text-xl font-bold text-slate-800 tracking-tight">Structure Details</h5>
+                    <p className="text-sm text-slate-600">Physical specifications and dimensions of your proposed structure</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
@@ -905,9 +994,9 @@ export default function PlanRightWizard({
 
                 {/* Setbacks Section */}
                 <div className="bg-slate-50 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                  <div className="mb-6">
                     <h5 className="text-xl font-bold text-slate-800 tracking-tight">Setback Requirements</h5>
+                    <p className="text-sm text-slate-600">Minimum distances from property boundaries and building lines</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
@@ -987,9 +1076,9 @@ export default function PlanRightWizard({
 
                 {/* Location & Siting Section */}
                 <div className="bg-slate-50 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                  <div className="mb-6">
                     <h5 className="text-xl font-bold text-slate-800 tracking-tight">Location & Siting</h5>
+                    <p className="text-sm text-slate-600">Positioning relative to building lines, easements, and utilities</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
@@ -1015,33 +1104,59 @@ export default function PlanRightWizard({
 
                 {/* Context Flags Section */}
                 <div className="bg-slate-50 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-8 bg-amber-500 rounded-full"></div>
+                  <div className="mb-6">
                     <h5 className="text-xl font-bold text-slate-800 tracking-tight">Context & Constraints</h5>
+                    <p className="text-sm text-slate-600">Environmental and planning overlays affecting development</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Heritage Status</div>
-                      <div className="min-w-0">
-                        {getContextFlagsTags().heritage_item}
+                  
+                  {/* Heritage & Conservation Row */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                        <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <h6 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Heritage & Conservation</h6>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Heritage Status</div>
+                        <div className="min-w-0">
+                          {getContextFlagsTags().heritage_item}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Conservation Area</div>
+                        <div className="min-w-0">
+                          {getContextFlagsTags().conservation_area}
+                        </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Conservation Area</div>
-                      <div className="min-w-0">
-                        {getContextFlagsTags().conservation_area}
+                  </div>
+
+                  {/* Environmental Risks Row */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
                       </div>
+                      <h6 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Environmental Risks</h6>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Flood Risk</div>
-                      <div className="min-w-0">
-                        {getContextFlagsTags().flood_prone}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Flood Risk</div>
+                        <div className="min-w-0">
+                          {getContextFlagsTags().flood_prone}
+                        </div>
                       </div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bushfire Risk</div>
-                      <div className="min-w-0">
-                        {getContextFlagsTags().bushfire}
+                      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bushfire Risk</div>
+                        <div className="min-w-0">
+                          {getContextFlagsTags().bushfire}
+                        </div>
                       </div>
                     </div>
                   </div>

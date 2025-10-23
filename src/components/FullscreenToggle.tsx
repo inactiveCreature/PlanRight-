@@ -33,8 +33,8 @@ export default function FullscreenToggle({ className = '' }: FullscreenTogglePro
         // Exit fullscreen
         await document.exitFullscreen()
       }
-    } catch (error) {
-      console.error('Fullscreen toggle failed:', error)
+    } catch {
+      // Silently handle fullscreen toggle errors
     }
   }
 

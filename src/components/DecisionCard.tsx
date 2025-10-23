@@ -44,23 +44,23 @@ function normalizeCheckLabel(check: RuleCheck): string {
   
   // Map known patterns to user-friendly labels with clear explanations
   const labelMappings: Record<string, string> = {
-    'on_easement': '🚫 Cannot build on easement',
-    'over_sewer': '🚫 Cannot build over sewer lines',
-    'behind_building_line': '📍 Must be behind building line',
-    'setback_front': '📏 Front setback distance required',
-    'setback_side': '📏 Side setback distance required', 
-    'setback_rear': '📏 Rear setback distance required',
-    'height_max': '📐 Maximum height limit',
-    'area_max': '📐 Maximum floor area limit',
-    'heritage_item': '🏛️ Heritage item protection zone',
-    'conservation_area': '🌳 Conservation area restrictions',
-    'flood_prone': '🌊 Flood prone area limitations',
-    'bushfire_prone': '🔥 Bushfire prone area requirements',
-    'attached_to_dwelling': '🏠 Must attach to main dwelling',
-    'shipping_container': '📦 Shipping containers not allowed',
-    'non_combustible': '🛡️ Non-combustible materials required',
-    'roof_clearance': '🏠 Roof boundary clearance needed',
-    'class_7a': '🏢 Class 7a buildings prohibited',
+    'on_easement': 'Cannot build on easement',
+    'over_sewer': 'Cannot build over sewer lines',
+    'behind_building_line': 'Must be behind building line',
+    'setback_front': 'Front setback distance required',
+    'setback_side': 'Side setback distance required', 
+    'setback_rear': 'Rear setback distance required',
+    'height_max': 'Maximum height limit',
+    'area_max': 'Maximum floor area limit',
+    'heritage_item': 'Heritage item protection zone',
+    'conservation_area': 'Conservation area restrictions',
+    'flood_prone': 'Flood prone area limitations',
+    'bushfire_prone': 'Bushfire prone area requirements',
+    'attached_to_dwelling': 'Must attach to main dwelling',
+    'shipping_container': 'Shipping containers not allowed',
+    'non_combustible': 'Non-combustible materials required',
+    'roof_clearance': 'Roof boundary clearance needed',
+    'class_7a': 'Class 7a buildings prohibited',
   }
 
   // Try to match rule_id patterns
@@ -116,9 +116,6 @@ function ClauseChip({ clauseRef }: { clauseRef: string }) {
         aria-label={`Clause ${clauseRef}: ${clauseInfo.title}`}
         aria-describedby={`clause-tooltip-${clauseRef}`}
       >
-        <svg className="w-3 h-3 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-        </svg>
         <span className="truncate">{clauseRef}</span>
       </button>
       
@@ -142,15 +139,6 @@ function PurchaserRiskPanel() {
   return (
     <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl shadow-lg" role="alert" aria-labelledby="risk-assessment-title">
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center flex-shrink-0 shadow-md" aria-hidden="true">
-          <svg className="w-5 h-5 text-amber-800" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
         <div className="flex-1">
           <h4 id="risk-assessment-title" className="text-lg font-bold text-amber-900 mb-3">Purchase Risk Assessment</h4>
           <ul className="text-sm text-amber-800 space-y-2 mb-4" role="list">
@@ -171,9 +159,6 @@ function PurchaserRiskPanel() {
             className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#0A6CFF] to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0A6CFF] focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg"
             aria-label="Export assessment results for conveyancer"
           >
-            <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
             <span>Export for conveyancer</span>
           </button>
         </div>
@@ -201,20 +186,6 @@ function CheckItem({ check, showClauseRef = true }: { check: RuleCheck; showClau
     return 'text-slate-700 bg-slate-50 border border-slate-200 p-4 rounded-xl'
   }
 
-  const getStatusIcon = () => {
-    if (severity === 'critical' && !check.pass) return '🔴'
-    if (severity === 'major' && !check.pass) return '🟡'
-    if (check.pass) return '✅'
-    return 'ℹ️'
-  }
-
-  const getStatusColor = () => {
-    if (severity === 'critical' && !check.pass) return 'text-rose-600'
-    if (severity === 'major' && !check.pass) return 'text-amber-600'
-    if (check.pass) return 'text-emerald-600'
-    return 'text-slate-500'
-  }
-
   const getStatusText = () => {
     if (severity === 'critical' && !check.pass) return 'Critical failure'
     if (severity === 'major' && !check.pass) return 'Major issue'
@@ -224,27 +195,22 @@ function CheckItem({ check, showClauseRef = true }: { check: RuleCheck; showClau
 
   const getUserFriendlyExplanation = () => {
     if (check.pass) {
-      return '✅ This requirement is met - no action needed'
+      return 'This requirement is met - no action needed'
     }
     
     if (severity === 'critical') {
-      return '🚨 This is a critical issue that must be resolved before proceeding'
+      return 'This is a critical issue that must be resolved before proceeding'
     }
     
     if (severity === 'major') {
-      return '⚠️ This issue needs attention and may require changes to your plans'
+      return 'This issue needs attention and may require changes to your plans'
     }
     
-    return 'ℹ️ Additional information about this requirement'
+    return 'Additional information about this requirement'
   }
   
   return (
-    <div className={`flex items-start gap-4 ${getItemStyles()} transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2`} role="listitem">
-      <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${getStatusColor()} flex-shrink-0`} aria-hidden="true">
-        <span className="text-sm font-bold">
-          {getStatusIcon()}
-        </span>
-      </div>
+    <div className={`${getItemStyles()} transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2`} role="listitem">
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold mb-1" aria-label={`${label} - ${getStatusText()}`}>
           {label}
@@ -289,12 +255,10 @@ export default function DecisionCard({
       // Try visual PDF first, fallback to text PDF if it fails
       try {
         await generateDecisionCardPDF(cardRef.current, result)
-      } catch (error) {
-        console.warn('Visual PDF generation failed, falling back to text PDF:', error)
+      } catch {
         generateTextPDF(result)
       }
-    } catch (error) {
-      console.error('PDF generation failed:', error)
+    } catch {
       alert('Failed to generate PDF. Please try again.')
     } finally {
       setIsGeneratingPDF(false)
@@ -392,11 +356,6 @@ export default function DecisionCard({
         {/* Key Findings section */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center shadow-sm flex-shrink-0" aria-hidden="true">
-              <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clipRule="evenodd" />
-              </svg>
-            </div>
             <h3 className="text-lg sm:text-xl font-bold text-slate-800">Assessment Results</h3>
             <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
           </div>

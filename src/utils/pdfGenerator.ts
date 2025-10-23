@@ -47,8 +47,7 @@ export async function generateDecisionCardPDF(
 
     // Download the PDF
     pdf.save(finalFilename)
-  } catch (error) {
-    console.error('Error generating PDF:', error)
+  } catch {
     throw new Error('Failed to generate PDF. Please try again.')
   }
 }
@@ -154,8 +153,7 @@ export function generateTextPDF(
     
     // Download the PDF
     pdf.save(finalFilename)
-  } catch (error) {
-    console.error('Error generating text PDF:', error)
+  } catch {
     throw new Error('Failed to generate PDF. Please try again.')
   }
 }

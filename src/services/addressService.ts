@@ -79,8 +79,8 @@ export async function lookupAddress(query: string): Promise<AddressLookupResult 
         raw: first,
       }
     }
-  } catch (err) {
-    console.warn('NSW address API lookup failed, falling back to Nominatim', (err as Error).message)
+  } catch {
+    // NSW address API lookup failed, falling back to Nominatim
   }
 
   // 2) Fallback to Nominatim
@@ -102,8 +102,8 @@ export async function lookupAddress(query: string): Promise<AddressLookupResult 
         raw: item,
       }
     }
-  } catch (err) {
-    console.warn('Nominatim fallback failed', (err as Error).message)
+  } catch {
+    // Nominatim fallback failed
   }
 
   return null

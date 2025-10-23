@@ -65,7 +65,6 @@ export class ChatService {
 
       onComplete()
     } catch (error) {
-      console.error('Chat service error:', error)
       onError(error instanceof Error ? error.message : 'Unknown error')
     }
   }

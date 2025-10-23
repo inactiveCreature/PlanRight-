@@ -53,8 +53,8 @@ export default function AddressField({
           lon || undefined,
           (addr as any).propId
         )
-      } catch (e) {
-        console.warn('Planning attributes fetch failed', (e as Error).message)
+      } catch {
+        // Planning attributes fetch failed - continue without them
       }
 
       const payload = { ...addr, planning }
