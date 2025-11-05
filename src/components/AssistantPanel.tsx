@@ -15,7 +15,7 @@ interface AssistantPanelProps {
 }
 
 export default function AssistantPanel({ role, className = '' }: AssistantPanelProps) {
-  const { setField } = usePlanRightStore()
+  const { setField, setCurrentStep, proposal, currentStep } = usePlanRightStore()
   const [messages, setMessages] = useState<Message[]>([
     {
       who: 'ai',
@@ -109,8 +109,211 @@ export default function AssistantPanel({ role, className = '' }: AssistantPanelP
     }
   }
 
+  // Parse JSON actions from AI response
+  function parseActions(response: string): Array<{ type: string; field?: string; value?: any }> {
+    const actions: Array<{ type: string; field?: string; value?: any }> = []
+    
+    // Try to find JSON blocks in the response (with markdown code blocks)
+    const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/gi
+    const jsonMatches = [...response.matchAll(jsonBlockRegex)]
+    
+    for (const match of jsonMatches) {
+      try {
+        const jsonStr = match[1].trim()
+        const parsed = JSON.parse(jsonStr)
+        if (parsed.actions && Array.isArray(parsed.actions)) {
+          actions.push(...parsed.actions)
+          console.log('Parsed actions from JSON block:', parsed.actions)
+        }
+      } catch (e) {
+        console.warn('Failed to parse JSON block:', match[1], e)
+      }
+    }
+    
+    // Also try to find JSON without code blocks (in case AI doesn't use markdown)
+    if (jsonMatches.length === 0) {
+      // More flexible regex to find JSON objects
+      const jsonRegex = /\{\s*"actions"\s*:\s*\[[\s\S]*?\]\s*\}/g
+      const bareJsonMatches = response.match(jsonRegex)
+      if (bareJsonMatches) {
+        for (const match of bareJsonMatches) {
+          try {
+            const parsed = JSON.parse(match)
+            if (parsed.actions && Array.isArray(parsed.actions)) {
+              actions.push(...parsed.actions)
+              console.log('Parsed actions from bare JSON:', parsed.actions)
+            }
+          } catch (e) {
+            console.warn('Failed to parse bare JSON:', match, e)
+          }
+        }
+      }
+    }
+    
+    if (actions.length === 0) {
+      console.warn('No actions found in AI response:', response)
+    }
+    
+    return actions
+  }
+
+  // Fallback: Extract field changes from natural language text
+  function extractAndSetFieldsFromText(response: string, userMessage: string): void {
+    console.log('Attempting to extract fields from natural language')
+    
+    // Common patterns for dimension changes
+    const dimensionPatterns = [
+      { regex: /length.*?(\d+\.?\d*)\s*m/i, field: 'dimensions.length_m' },
+      { regex: /width.*?(\d+\.?\d*)\s*m/i, field: 'dimensions.width_m' },
+      { regex: /height.*?(\d+\.?\d*)\s*m/i, field: 'dimensions.height_m' },
+      { regex: /area.*?(\d+\.?\d*)\s*m²/i, field: 'dimensions.area_m2' },
+    ]
+    
+    // Common patterns for property changes
+    const propertyPatterns = [
+      { regex: /zone.*?(r[123]|ru[12345])/i, field: 'property.zone_text', transform: (v: string) => v.toUpperCase() },
+      { regex: /lot.*?size.*?(\d+\.?\d*)\s*m²/i, field: 'property.lot_size_m2' },
+      { regex: /frontage.*?(\d+\.?\d*)\s*m/i, field: 'property.frontage_m' },
+    ]
+    
+    // Try to extract from user message first (more reliable)
+    const textToSearch = userMessage + ' ' + response
+    
+    // Extract dimensions
+    for (const pattern of dimensionPatterns) {
+      const match = textToSearch.match(pattern.regex)
+      if (match) {
+        const value = Number(match[1])
+        if (!isNaN(value)) {
+          console.log(`Extracted ${pattern.field} = ${value} from text`)
+          setField(pattern.field, value)
+        }
+      }
+    }
+    
+    // Extract property fields
+    for (const pattern of propertyPatterns) {
+      const match = textToSearch.match(pattern.regex)
+      if (match) {
+        let value: any = match[1]
+        if (pattern.transform) {
+          value = pattern.transform(value as string)
+        } else {
+          const numValue = Number(value)
+          if (!isNaN(numValue)) {
+            value = numValue
+          }
+        }
+        console.log(`Extracted ${pattern.field} = ${value} from text`)
+        setField(pattern.field, value)
+      }
+    }
+  }
+
+  // Map field paths to step indices
+  function getStepForField(fieldPath: string): number | null {
+    const stepMap: Record<string, number> = {
+      property: 1,
+      structure: 2,
+      dimensions: 3,
+      location: 4,
+      siting: 5,
+      context: 6,
+    }
+    
+    const pathParts = fieldPath.split('.')
+    const stepName = pathParts[0]
+    return stepMap[stepName] ?? null
+  }
+
+  // Execute actions from AI response
+  function executeActions(actions: Array<{ type: string; field?: string; value?: any }>): void {
+    const changedSteps = new Set<number>()
+    
+    console.log('Executing actions:', actions)
+    
+    for (const action of actions) {
+      if (action.type === 'set_field' && action.field && action.value !== undefined) {
+        try {
+          // Convert value types appropriately
+          let finalValue: any = action.value
+          
+          // Handle boolean strings
+          if (typeof action.value === 'string') {
+            if (action.value.toLowerCase() === 'true') {
+              finalValue = true
+            } else if (action.value.toLowerCase() === 'false') {
+              finalValue = false
+            } else if (!isNaN(Number(action.value)) && action.value.trim() !== '') {
+              // Convert numeric strings to numbers for measurement and numeric fields
+              // Skip boolean fields (they end with _bool)
+              if (!action.field.endsWith('_bool')) {
+                finalValue = Number(action.value)
+              }
+            }
+          }
+          
+          console.log(`Setting field: ${action.field} = ${finalValue} (original: ${action.value}, type: ${typeof action.value})`)
+          setField(action.field, finalValue)
+          console.log(`Successfully set field: ${action.field}`)
+          
+          // Track which step this field belongs to
+          const stepIndex = getStepForField(action.field)
+          if (stepIndex !== null) {
+            changedSteps.add(stepIndex)
+          }
+        } catch (error) {
+          console.error('Error setting field:', action.field, action.value, error)
+        }
+      } else {
+        console.warn('Invalid action:', action)
+      }
+    }
+    
+    // Navigate to the first changed step if the user is not already viewing one of the changed steps
+    // This helps users see the changes immediately without being disruptive
+    if (changedSteps.size > 0) {
+      const firstChangedStep = Math.min(...Array.from(changedSteps))
+      // Only navigate if user is not currently viewing any of the changed steps
+      const isViewingChangedStep = Array.from(changedSteps).includes(currentStep)
+      if (!isViewingChangedStep) {
+        console.log(`Navigating to step ${firstChangedStep} to show changes`)
+        setCurrentStep(firstChangedStep)
+      }
+    }
+  }
+
   async function sendToOllama(userMessage: string) {
     setIsLoading(true)
+
+    // Only include current form state if the user asks about it or needs context
+    // This prevents the AI from always listing all fields
+    const needsContext = 
+      userMessage.toLowerCase().includes('current') ||
+      userMessage.toLowerCase().includes('what') ||
+      userMessage.toLowerCase().includes('show') ||
+      userMessage.toLowerCase().includes('summary') ||
+      userMessage.toLowerCase().includes('all fields') ||
+      userMessage.toLowerCase().includes('form values')
+
+    let contextMessage = userMessage
+    
+    // Only add context if needed, and keep it minimal
+    if (needsContext) {
+      // Build a compact summary only of fields that are set
+      const setFields: string[] = []
+      
+      if (proposal.property.zone_text) setFields.push(`zone: ${proposal.property.zone_text}`)
+      if (proposal.property.lot_size_m2) setFields.push(`lot size: ${proposal.property.lot_size_m2}m²`)
+      if (proposal.structure.type) setFields.push(`structure: ${proposal.structure.type}`)
+      if (proposal.dimensions.length_m) setFields.push(`length: ${proposal.dimensions.length_m}m`)
+      if (proposal.dimensions.width_m) setFields.push(`width: ${proposal.dimensions.width_m}m`)
+      if (proposal.dimensions.height_m) setFields.push(`height: ${proposal.dimensions.height_m}m`)
+      
+      if (setFields.length > 0) {
+        contextMessage = `Current form (set values only): ${setFields.join(', ')}\n\nUser request: ${userMessage}`
+      }
+    }
 
     // Convert messages to ChatMessage format
     const chatMessages: ChatMessage[] = [
@@ -118,7 +321,10 @@ export default function AssistantPanel({ role, className = '' }: AssistantPanelP
         role: m.who === 'user' ? ('user' as const) : ('assistant' as const),
         content: m.text,
       })),
-      { role: 'user', content: userMessage },
+      { 
+        role: 'user', 
+        content: contextMessage
+      },
     ]
 
     let aiResponse = ''
@@ -145,6 +351,21 @@ export default function AssistantPanel({ role, className = '' }: AssistantPanelP
         },
         () => {
           setIsLoading(false)
+          
+          // Parse and execute actions from the response
+          console.log('AI response complete:', aiResponse)
+          const actions = parseActions(aiResponse)
+          console.log('Parsed actions:', actions)
+          
+          if (actions.length > 0) {
+            console.log('Executing', actions.length, 'action(s)')
+            executeActions(actions)
+            // The AI's natural language response already explains what was changed
+          } else {
+            console.warn('No actions found in AI response. Full response:', aiResponse)
+            // Try to extract field changes from natural language as fallback
+            extractAndSetFieldsFromText(aiResponse, userMessage)
+          }
         },
         (error: string) => {
           setIsLoading(false)

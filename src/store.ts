@@ -28,12 +28,11 @@ const defaultProposal: Proposal = {
     height_m: '',
     area_m2: '',
   },
-  location: {
-    setback_front_m: '',
-    setback_side_m: '',
-    setback_rear_m: '',
-    behind_building_line_bool: false,
-  },
+    location: {
+      setback_front_m: '',
+      setback_side_m: '',
+      setback_rear_m: '',
+    },
   siting: {
     on_easement_bool: false,
     over_sewer_bool: false,
@@ -255,7 +254,6 @@ export const usePlanRightStore = create<PlanRightStore>()(
             'location.setback_front_m',
             'location.setback_side_m',
             'location.setback_rear_m',
-            'location.behind_building_line_bool',
           ],
           siting: [
             'siting.on_easement_bool',

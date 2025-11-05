@@ -130,24 +130,23 @@ export default function PlanRightWizard({
 
   // Status tag mappings for Location & Siting
   const getLocationSitingTags = () => {
-    const { behind_building_line_bool } = proposal.location
+    const { setback_front_m } = proposal.location
     const { on_easement_bool, over_sewer_bool } = proposal.siting
+    
+    // Infer behind building line from front setback
+    const hasFrontSetback = setback_front_m !== undefined && setback_front_m !== '' && setback_front_m !== null
+    const behind_building_line = !hasFrontSetback
 
     return {
-      behind_building_line: behind_building_line_bool === true ? (
+      behind_building_line: behind_building_line ? (
         <StatusTag 
           state="pass" 
           text="Behind building line"
         />
-      ) : behind_building_line_bool === false ? (
-        <StatusTag 
-          state="fail" 
-          text="In front of building line"
-        />
       ) : (
         <StatusTag 
           state="neutral" 
-          text="Not provided"
+          text={`Front setback: ${typeof setback_front_m === 'number' ? setback_front_m : 'not set'}m`}
         />
       ),
 
@@ -298,9 +297,14 @@ export default function PlanRightWizard({
 
   // Helper to check if field has error (with conditional logic for front setback)
   const hasFieldError = (fieldPath: string): boolean => {
-    // Special handling for front setback when behind building line
-    if (fieldPath === 'setback_front_m' && proposal.location.behind_building_line_bool) {
-      return false // Never show error when behind building line
+    // Special handling for front setback - if behind building line (no front setback), no error
+    if (fieldPath === 'setback_front_m') {
+      const frontSetback = proposal.location.setback_front_m
+      const hasFrontSetback = frontSetback !== undefined && frontSetback !== '' && frontSetback !== null
+      // If no front setback provided, assume behind building line (no error)
+      if (!hasFrontSetback) {
+        return false
+      }
     }
     return isFieldError(currentStepId, fieldPath, validationData)
   }
@@ -656,7 +660,7 @@ export default function PlanRightWizard({
         <>
           <PageHeader
             title="Location & Setbacks"
-            subtitle="If behind the building line, front setback is not required. If in front, meet the minimum front setback."
+            subtitle="Enter setback distances from property boundaries. If your structure is behind the building line (typically 5m from street), you can leave front setback empty."
           >
             <ResetMenu
               currentStep="location"
@@ -666,12 +670,6 @@ export default function PlanRightWizard({
           </PageHeader>
           <Card>
             <div className="space-y-4">
-              <SwitchField
-                label="Behind building line?"
-                description="Is the structure behind the building line? The building line is typically 5m from the street frontage. Structures must be behind this line."
-                checked={proposal.location.behind_building_line_bool}
-                onChange={(v: boolean) => setField('location.behind_building_line_bool', v)}
-              />
               <NumberField
                 label="Front setback (m)"
                 value={
@@ -679,13 +677,13 @@ export default function PlanRightWizard({
                     ? proposal.location.setback_front_m
                     : undefined
                 }
-                onCommit={(v) => setField('location.setback_front_m', v)}
-                disabled={proposal.location.behind_building_line_bool}
+                onCommit={(v) => {
+                  setField('location.setback_front_m', v)
+                }}
                 min={0}
                 step={0.1}
-                placeholder={proposal.location.behind_building_line_bool ? 'Not required' : '5.0'}
+                placeholder="5.0 (leave empty if behind building line)"
                 suffix="m"
-                required={!proposal.location.behind_building_line_bool}
                 ariaLabel="Front setback in meters"
                 invalid={hasFieldError('setback_front_m')}
                 errorMessage={getFieldError('setback_front_m')}
@@ -725,7 +723,7 @@ export default function PlanRightWizard({
               />
             </div>
 
-            {/* BBL Helper Copy */}
+            {/* Building Line Helper Copy */}
             <div className="mt-8 p-4 bg-blue-50 border border-blue-300 rounded-xl">
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -738,20 +736,9 @@ export default function PlanRightWizard({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-blue-800 mb-1">Building Line Logic</h4>
+                  <h4 className="text-sm font-semibold text-blue-800 mb-1">Building Line Information</h4>
                   <p className="text-sm text-blue-800">
-                    {proposal.location.behind_building_line_bool ? (
-                      <>
-                        ✅ <strong>Behind building line:</strong> Front setback is not required.
-                        Your structure is positioned behind the building line (typically 5m from
-                        street frontage).
-                      </>
-                    ) : (
-                      <>
-                        ⚠️ <strong>In front of building line:</strong> Front setback is required and
-                        must meet the minimum distance (5.0m) from the street frontage.
-                      </>
-                    )}
+                    If your structure is behind the building line (typically 5m from street frontage), you can leave the front setback field empty. If your structure is in front of the building line, enter the front setback distance (minimum 5.0m).
                   </p>
                 </div>
               </div>

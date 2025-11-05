@@ -28,7 +28,6 @@ export interface Location {
   setback_front_m: number | string
   setback_side_m: number | string
   setback_rear_m: number | string
-  behind_building_line_bool: boolean
 }
 
 export interface Siting {

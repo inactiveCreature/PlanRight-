@@ -59,30 +59,15 @@ const dimensionsSchema = z.object({
   area_m2: nz.optional(),
 })
 
-const locationSchema = z
-  .object({
-    behind_building_line_bool: z.boolean(),
-    setback_side_m: nz.refine((val) => val !== undefined, {
-      message: 'Side setback must be 0 or greater',
-    }),
-    setback_rear_m: nz.refine((val) => val !== undefined, {
-      message: 'Rear setback must be 0 or greater',
-    }),
-    setback_front_m: nz.optional(),
-  })
-  .refine(
-    (data) => {
-      // If not behind building line, front setback is required
-      if (!data.behind_building_line_bool) {
-        return data.setback_front_m !== undefined && data.setback_front_m >= 0
-      }
-      return true
-    },
-    {
-      message: 'Front setback is required when not behind building line',
-      path: ['setback_front_m'],
-    }
-  )
+const locationSchema = z.object({
+  setback_side_m: nz.refine((val) => val !== undefined, {
+    message: 'Side setback must be 0 or greater',
+  }),
+  setback_rear_m: nz.refine((val) => val !== undefined, {
+    message: 'Rear setback must be 0 or greater',
+  }),
+  setback_front_m: nz.optional(), // Optional - if empty, assumes behind building line
+})
 
 const sitingSchema = z.object({
   on_easement_bool: z.boolean(),
@@ -122,7 +107,6 @@ export const fieldLabels: Record<string, string> = {
   width_m: 'Width',
   height_m: 'Height',
   area_m2: 'Area',
-  behind_building_line_bool: 'Behind Building Line',
   setback_front_m: 'Front Setback',
   setback_side_m: 'Side Setback',
   setback_rear_m: 'Rear Setback',
@@ -141,7 +125,7 @@ export const requiredPaths: Record<StepId, string[]> = {
   property: ['zone_text', 'lot_size_m2', 'frontage_m', 'corner_lot_bool', 'easement_bool'],
   structure: ['type'],
   dimensions: ['length_m', 'width_m', 'height_m'],
-  location: ['behind_building_line_bool', 'setback_side_m', 'setback_rear_m'],
+    location: ['setback_side_m', 'setback_rear_m'],
   siting: ['on_easement_bool', 'over_sewer_bool', 'attached_to_dwelling_bool'],
   context: ['heritage_item_bool', 'conservation_area_bool', 'flood_prone_bool', 'bushfire_bool'],
   review: [],
@@ -186,6 +170,20 @@ export function validateStep(stepId: StepId, data: any): ValidationResult {
       dataToValidate = { role: data.role }
     } else {
       dataToValidate = data[stepId]
+      
+      // Normalize empty strings to undefined for location step (especially for front setback)
+      if (stepId === 'location' && dataToValidate) {
+        if (dataToValidate.setback_front_m === '' || dataToValidate.setback_front_m === null) {
+          dataToValidate.setback_front_m = undefined
+        }
+        if (dataToValidate.setback_side_m === '' || dataToValidate.setback_side_m === null) {
+          dataToValidate.setback_side_m = undefined
+        }
+        if (dataToValidate.setback_rear_m === '' || dataToValidate.setback_rear_m === null) {
+          dataToValidate.setback_rear_m = undefined
+        }
+        
+      }
     }
 
     schema.parse(dataToValidate)

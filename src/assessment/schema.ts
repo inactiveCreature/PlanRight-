@@ -40,10 +40,9 @@ const dimensionsSchema = z.object({
 
 // Location schema
 const locationSchema = z.object({
-  setback_front_m: nonNegativeNumber,
+  setback_front_m: nonNegativeNumber.optional(), // Optional - if empty, assumes behind building line
   setback_side_m: nonNegativeNumber,
   setback_rear_m: nonNegativeNumber,
-  behind_building_line_bool: z.boolean(),
 })
 
 // Siting schema

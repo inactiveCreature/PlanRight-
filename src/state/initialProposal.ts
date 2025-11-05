@@ -15,7 +15,6 @@ export const INITIAL_PROPOSAL: Proposal = {
     setback_front_m: '',
     setback_side_m: '',
     setback_rear_m: '',
-    behind_building_line_bool: false,
   },
   siting: {
     on_easement_bool: false,
